@@ -2,6 +2,7 @@ import java.util.Properties // Wajib tambahkan ini di baris paling atas
 
 plugins {
     alias(libs.plugins.android.application)
+    id("com.google.gms.google-services")
 }
 
 // Tambahkan blok ini untuk membaca file local.properties
@@ -13,7 +14,7 @@ if (localPropertiesFile.exists()) {
 
 android {
     namespace = "com.example.kaktuan"
-    compileSdk = 34 // Catatan: Saya sarankan pakai 34 atau 35 yang stabil, 36 masih eksperimental
+    compileSdk = 36 // Catatan: Saya sarankan pakai 34 atau 35 yang stabil, 36 masih eksperimental
 
     // 1. Aktifkan fitur BuildConfig di sini
     buildFeatures {
@@ -23,7 +24,7 @@ android {
     defaultConfig {
         applicationId = "com.example.kaktuan"
         minSdk = 24
-        targetSdk = 34 // Sesuaikan dengan compileSdk
+        targetSdk = 36 // Sesuaikan dengan compileSdk
         versionCode = 1
         versionName = "1.0"
 
@@ -47,6 +48,9 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+    buildFeatures {
+        viewBinding = true
+    }
 }
 
 dependencies {
@@ -55,6 +59,7 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.11.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+    implementation(libs.androidx.activity)
 
     // --- 2. LIBRARY CAMERAX ---
     val camerax_version = "1.3.0"
@@ -66,4 +71,16 @@ dependencies {
     // --- 3. LIBRARY RETROFIT (Untuk Cloud Vision API) ---
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+
+    // Firebase BoM — satu versi untuk semua library Firebase
+    implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
+
+    // Firebase Authentication
+    implementation("com.google.firebase:firebase-auth")
+
+    // Cloud Firestore
+    implementation("com.google.firebase:firebase-firestore")
+
+    // Google Sign-In
+    implementation("com.google.android.gms:play-services-auth:20.7.0")
 }
