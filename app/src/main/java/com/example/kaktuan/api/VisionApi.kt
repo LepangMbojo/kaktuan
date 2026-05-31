@@ -1,4 +1,4 @@
-package com.example.kaktuan
+package com.example.kaktuan.api
 
 import retrofit2.Call
 import retrofit2.Retrofit

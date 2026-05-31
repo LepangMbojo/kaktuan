@@ -1,8 +1,9 @@
-package com.example.kaktuan
+package com.example.kaktuan.ui.scan
 
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.util.Base64
 import android.util.Log
 import android.widget.Button
 import android.widget.Toast
@@ -16,11 +17,19 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
+import com.example.kaktuan.api.AnnotateRequest
+import com.example.kaktuan.BuildConfig
+import com.example.kaktuan.api.Feature
+import com.example.kaktuan.api.ImageSource
+import com.example.kaktuan.R
+import com.example.kaktuan.api.RetrofitClient
+import com.example.kaktuan.api.VisionRequest
+import com.example.kaktuan.api.VisionResponse
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 
 class ScanActivity : AppCompatActivity() {
 
@@ -117,7 +126,7 @@ class ScanActivity : AppCompatActivity() {
         val buffer = image.planes[0].buffer
         val bytes = ByteArray(buffer.remaining())
         buffer.get(bytes)
-        return android.util.Base64.encodeToString(bytes, android.util.Base64.NO_WRAP)
+        return Base64.encodeToString(bytes, Base64.NO_WRAP)
     }
 
     private fun sendToCloudVision(base64Image: String) {

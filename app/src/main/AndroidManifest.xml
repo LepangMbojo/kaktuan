@@ -16,6 +16,12 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.kaktuan">
+<!--        <activity-->
+<!--            android:name=".ui.history.HistoryActivity"-->
+<!--            android:exported="false" />-->
+<!--        <activity-->
+<!--            android:name=".ui.profile.ProfileActivity"-->
+<!--            android:exported="false" />-->
         <activity
             android:name=".ui.home.HomeActivity"
             android:exported="false" />
@@ -23,20 +29,23 @@
             android:name=".ui.auth.RegisterActivity"
             android:exported="false" />
         <activity
-            android:name=".MainActivity"
-            android:exported="false" />
-        <activity
-            android:name=".ScanActivity"
+            android:name=".ui.scan.ScanActivity"
             android:exported="false" /> <!-- ScanActivity diubah exported="true" dan diberi intent-filter agar jadi halaman pertama -->
         <activity
-            android:name=".ui.auth.LoginActivity"
+            android:name=".MainActivity"
             android:exported="true">
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
         </activity>
+
+        <activity
+            android:name=".ui.auth.LoginActivity"
+            android:exported="false" />
     </application>
 
 </manifest>

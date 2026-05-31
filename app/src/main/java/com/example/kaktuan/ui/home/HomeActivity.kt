@@ -4,7 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.example.kaktuan.ScanActivity
+import com.example.kaktuan.ui.scan.ScanActivity
 import com.example.kaktuan.R
 import com.example.kaktuan.databinding.ActivityHomeBinding
 
