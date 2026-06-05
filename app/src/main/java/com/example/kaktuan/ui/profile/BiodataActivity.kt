@@ -4,21 +4,21 @@ import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.example.kaktuan.databinding.ActivityProfileBinding // Pastikan import binding ini benar
+import com.example.kaktuan.databinding.ActivityBiodataBinding // Pastikan import binding ini benar
 import com.example.kaktuan.firebase.firestore.FirestoreHelper
 import com.example.kaktuan.model.User
 import com.example.kaktuan.ui.home.HomeActivity
 import com.google.firebase.auth.FirebaseAuth
 
-class ProfileSetupActivity : AppCompatActivity() {
+class BiodataActivity : AppCompatActivity() {
 
-    private lateinit var binding: ActivityProfileBinding
+    private lateinit var binding: ActivityBiodataBinding
     private lateinit var auth: FirebaseAuth
     private lateinit var firestoreHelper: FirestoreHelper
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityProfileBinding.inflate(layoutInflater)
+        binding = ActivityBiodataBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         auth = FirebaseAuth.getInstance()

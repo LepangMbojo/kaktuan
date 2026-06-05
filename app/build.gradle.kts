@@ -19,6 +19,7 @@ android {
     // 1. Aktifkan fitur BuildConfig di sini
     buildFeatures {
         buildConfig = true
+        viewBinding = true
     }
 
     defaultConfig {

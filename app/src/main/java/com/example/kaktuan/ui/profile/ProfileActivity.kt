@@ -7,15 +7,15 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
-import com.example.kaktuan.databinding.FragmentProfileBinding // Pastikan nama import ini sesuai
+import com.example.kaktuan.databinding.ActivityProfileBinding // Pastikan nama import ini sesuai
 import com.example.kaktuan.firebase.firestore.FirestoreHelper
 import com.example.kaktuan.ui.auth.LoginActivity
 import com.google.firebase.auth.FirebaseAuth
 
-class ProfileFragment : Fragment() {
+class ProfileActivity : Fragment() {
 
     // Setup ViewBinding untuk Fragment
-    private var _binding: FragmentProfileBinding? = null
+    private var _binding: ActivityProfileBinding? = null
     private val binding get() = _binding!!
 
     private lateinit var auth: FirebaseAuth
@@ -25,7 +25,7 @@ class ProfileFragment : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentProfileBinding.inflate(inflater, container, false)
+        _binding = ActivityProfileBinding.inflate(inflater, container, false)
         return binding.root
     }
 

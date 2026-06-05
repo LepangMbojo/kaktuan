@@ -1,38 +1,32 @@
+# Android Studio
 *.iml
-.gradle
-/local.properties
+.idea/
+!.idea/codeStyles/
+!.idea/inspectionProfiles/
 
-.idea/caches
-.idea/libraries
-.idea/modules.xml
-.idea/workspace.xml
-.idea/navEditor.xml
-.idea/assetWizardSettings.xml
+# Gradle Cache
+.gradle/
 
-.DS_Store
+# Local config
+local.properties
 
+# Build outputs
 /build
 **/build/
 
-captures
-
-/app/google-services.json
-
-.externalNativeBuild
-.cxx
+# Native build
+.externalNativeBuild/
+.cxx/
 
 # Kotlin
-.kotlin
+.kotlin/
 
 # Logs
 *.log
 
-# Generated
-/generated
-
-# APK
+# APK/AAB
 *.apk
 *.aab
 
-# Crashlytics
-com_crashlytics_export_strings.xml
+# Firebase
+app/google-services.json

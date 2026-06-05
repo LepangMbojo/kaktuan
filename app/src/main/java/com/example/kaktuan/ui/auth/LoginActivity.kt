@@ -6,7 +6,9 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.kaktuan.R
 import com.example.kaktuan.databinding.ActivityLoginBinding
+import com.example.kaktuan.firebase.firestore.FirestoreHelper
 import com.example.kaktuan.ui.home.HomeActivity
+import com.example.kaktuan.ui.profile.ProfileActivity // Pastikan import ini sesuai
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
@@ -19,6 +21,7 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var binding: ActivityLoginBinding
     private lateinit var auth: FirebaseAuth
     private lateinit var googleSignInClient: GoogleSignInClient
+    private lateinit var firestoreHelper: FirestoreHelper
 
     private val RC_SIGN_IN = 100
 
@@ -28,8 +31,9 @@ class LoginActivity : AppCompatActivity() {
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Firebase Auth
+        // Firebase & Firestore Helper
         auth = FirebaseAuth.getInstance()
+        firestoreHelper = FirestoreHelper()
 
         // =========================
         // GOOGLE SIGN IN CONFIG
@@ -49,20 +53,13 @@ class LoginActivity : AppCompatActivity() {
         // =========================
 
         binding.btnLogin.setOnClickListener {
-
             val email = binding.etEmail.text.toString().trim()
             val password = binding.etPassword.text.toString().trim()
 
             if (email.isEmpty() || password.isEmpty()) {
-
-                Toast.makeText(
-                    this,
-                    "Email dan Password wajib diisi",
-                    Toast.LENGTH_SHORT
-                ).show()
-
+                Toast.makeText(this, "Email dan Password wajib diisi", Toast.LENGTH_SHORT).show()
             } else {
-
+                binding.btnLogin.isEnabled = false // Mencegah klik ganda
                 loginUser(email, password)
             }
         }
@@ -72,7 +69,6 @@ class LoginActivity : AppCompatActivity() {
         // =========================
 
         binding.btnGoogleLogin.setOnClickListener {
-
             signInGoogle()
         }
 
@@ -81,10 +77,7 @@ class LoginActivity : AppCompatActivity() {
         // =========================
 
         binding.tvRegister.setOnClickListener {
-
-            startActivity(
-                Intent(this, RegisterActivity::class.java)
-            )
+            startActivity(Intent(this, RegisterActivity::class.java))
         }
     }
 
@@ -93,31 +86,16 @@ class LoginActivity : AppCompatActivity() {
     // =========================
 
     private fun loginUser(email: String, password: String) {
-
         auth.signInWithEmailAndPassword(email, password)
-            .addOnCompleteListener(this) {
-
-                if (it.isSuccessful) {
-
-                    Toast.makeText(
-                        this,
-                        "Login berhasil",
-                        Toast.LENGTH_SHORT
-                    ).show()
-
-                    startActivity(
-                        Intent(this, HomeActivity::class.java)
-                    )
-
-                    finish()
-
+            .addOnCompleteListener(this) { task ->
+                if (task.isSuccessful) {
+                    val uid = auth.currentUser?.uid
+                    if (uid != null) {
+                        cekProfil(uid)
+                    }
                 } else {
-
-                    Toast.makeText(
-                        this,
-                        "Login gagal",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    binding.btnLogin.isEnabled = true
+                    Toast.makeText(this, "Login gagal: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
                 }
             }
     }
@@ -127,40 +105,20 @@ class LoginActivity : AppCompatActivity() {
     // =========================
 
     private fun signInGoogle() {
-
         val signInIntent = googleSignInClient.signInIntent
         startActivityForResult(signInIntent, RC_SIGN_IN)
     }
 
-    // =========================
-    // GOOGLE RESULT
-    // =========================
-
-    override fun onActivityResult(
-        requestCode: Int,
-        resultCode: Int,
-        data: Intent?
-    ) {
-
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
         if (requestCode == RC_SIGN_IN) {
-
             val task = GoogleSignIn.getSignedInAccountFromIntent(data)
-
             try {
-
                 val account = task.getResult(ApiException::class.java)
-
                 firebaseAuthWithGoogle(account.idToken!!)
-
             } catch (e: ApiException) {
-
-                Toast.makeText(
-                    this,
-                    "Google Sign In gagal",
-                    Toast.LENGTH_SHORT
-                ).show()
+                Toast.makeText(this, "Google Sign In gagal", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -170,34 +128,36 @@ class LoginActivity : AppCompatActivity() {
     // =========================
 
     private fun firebaseAuthWithGoogle(idToken: String) {
-
         val credential = GoogleAuthProvider.getCredential(idToken, null)
-
         auth.signInWithCredential(credential)
-            .addOnCompleteListener(this) {
-
-                if (it.isSuccessful) {
-
-                    Toast.makeText(
-                        this,
-                        "Login Google berhasil",
-                        Toast.LENGTH_SHORT
-                    ).show()
-
-                    startActivity(
-                        Intent(this, HomeActivity::class.java)
-                    )
-
-                    finish()
-
+            .addOnCompleteListener(this) { task ->
+                if (task.isSuccessful) {
+                    val uid = auth.currentUser?.uid
+                    if (uid != null) {
+                        cekProfil(uid)
+                    }
                 } else {
-
-                    Toast.makeText(
-                        this,
-                        "Firebase Google Login gagal",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    Toast.makeText(this, "Firebase Google Login gagal", Toast.LENGTH_SHORT).show()
                 }
             }
+    }
+
+    // =========================
+    // CEK PROFIL FIRESTORE
+    // =========================
+
+    private fun cekProfil(uid: String) {
+        Toast.makeText(this, "Mengecek data profil...", Toast.LENGTH_SHORT).show()
+
+        firestoreHelper.checkUserExists(uid) { isExists ->
+            if (isExists) {
+                // Profil sudah ada, ke halaman utama
+                startActivity(Intent(this, HomeActivity::class.java))
+            } else {
+                // Profil kosong, ke pengisian biodata
+                startActivity(Intent(this, ProfileActivity::class.java))
+            }
+            finish() // Menutup halaman login
+        }
     }
 }
