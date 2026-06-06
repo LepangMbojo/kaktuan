@@ -15,8 +15,18 @@
         android:layout_width="140dp"
         android:layout_height="140dp"
         android:src="@drawable/kaktuan_logo"
-        android:layout_marginBottom="32dp"
         android:contentDescription="@string/app_name"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Login"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        android:textColor="#1d5a5a"
+        android:layout_gravity="start"
+        android:textAlignment="viewStart"
+        android:layout_marginBottom="32dp"/>
 
     <!-- Email -->
 

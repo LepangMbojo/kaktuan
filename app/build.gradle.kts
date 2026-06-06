@@ -34,6 +34,14 @@ android {
         // 2. Suntikkan API Key dari local.properties ke dalam BuildConfig
         val apiKey = properties.getProperty("VISION_API_KEY") ?: ""
         buildConfigField("String", "VISION_API_KEY", "\"$apiKey\"")
+        val geminiKey =
+            properties.getProperty("GEMINI_API_KEY") ?: ""
+
+        buildConfigField(
+            "String",
+            "GEMINI_API_KEY",
+            "\"$geminiKey\""
+        )
     }
 
     buildTypes {
@@ -84,4 +92,6 @@ dependencies {
 
     // Google Sign-In
     implementation("com.google.android.gms:play-services-auth:20.7.0")
+
+    implementation("androidx.exifinterface:exifinterface:1.3.7")
 }

@@ -30,11 +30,31 @@ import retrofit2.Callback
 import retrofit2.Response
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import com.example.kaktuan.logic.OCRTextCleaner
+import android.widget.TextView
+import android.view.View
+import android.widget.ProgressBar
+import android.graphics.Bitmap
+import java.io.File
+import java.io.ByteArrayOutputStream
+import android.graphics.BitmapFactory
+import android.widget.ImageView
+import com.example.kaktuan.api.GeminiRequest
+import com.example.kaktuan.api.GeminiResponse
+import com.example.kaktuan.api.GeminiRetrofitClient
+import com.example.kaktuan.api.Content
+import com.example.kaktuan.api.Part
+import com.example.kaktuan.logic.GeminiParser
 
 class ScanActivity : AppCompatActivity() {
 
     private lateinit var viewFinder: PreviewView
     private lateinit var btnCapture: Button
+    private lateinit var tvResult: TextView
+    private lateinit var progressBar: ProgressBar
+    private lateinit var scanFrame: View
+    private lateinit var imgCaptured: ImageView
+    private lateinit var btnRetake: Button
 
     private var imageCapture: ImageCapture? = null
     private lateinit var cameraExecutor: ExecutorService
@@ -55,6 +75,11 @@ class ScanActivity : AppCompatActivity() {
 
         viewFinder = findViewById(R.id.viewFinder)
         btnCapture = findViewById(R.id.btnCapture)
+        tvResult = findViewById(R.id.tvResult)
+        progressBar = findViewById(R.id.progressBar)
+        scanFrame = findViewById(R.id.scanFrame)
+        imgCaptured = findViewById(R.id.imgCaptured)
+        btnRetake = findViewById(R.id.btnRetake)
         cameraExecutor = Executors.newSingleThreadExecutor()
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
@@ -66,6 +91,19 @@ class ScanActivity : AppCompatActivity() {
         // Memanggil fungsi jepret gambar saat tombol ditekan
         btnCapture.setOnClickListener {
             takePhoto()
+        }
+
+        btnRetake.setOnClickListener {
+
+            imgCaptured.visibility = View.GONE
+
+            viewFinder.visibility = View.VISIBLE
+
+            tvResult.text = ""
+
+            tvResult.visibility = View.GONE
+
+            btnRetake.visibility = View.GONE
         }
     }
 
@@ -97,36 +135,73 @@ class ScanActivity : AppCompatActivity() {
     }
 
     private fun takePhoto() {
+
         val imageCapture = imageCapture ?: return
 
-        btnCapture.isEnabled = false // Nonaktifkan tombol sementara
-        Toast.makeText(this, "Memproses gambar...", Toast.LENGTH_SHORT).show()
+        progressBar.visibility = View.VISIBLE
+        tvResult.visibility = View.GONE
+        btnCapture.isEnabled = false
+
+        val photoFile = File(
+            cacheDir,
+            "scan.jpg"
+        )
+
+        val outputOptions =
+            ImageCapture.OutputFileOptions.Builder(photoFile)
+                .build()
 
         imageCapture.takePicture(
+            outputOptions,
             ContextCompat.getMainExecutor(this),
-            object : ImageCapture.OnImageCapturedCallback() {
-                override fun onCaptureSuccess(image: ImageProxy) {
-                    // 1. Ubah gambar ke Base64
-                    val base64Image = imageProxyToBase64(image)
-                    image.close() // Wajib ditutup agar kamera tidak freeze
 
-                    // 2. Kirim ke Google Cloud Vision
+            object : ImageCapture.OnImageSavedCallback {
+
+                override fun onImageSaved(
+                    outputFileResults: ImageCapture.OutputFileResults
+                ) {
+
+                    val bitmap =
+                        BitmapFactory.decodeFile(
+                            photoFile.absolutePath
+                        )
+
+                    val croppedBitmap =
+                        cropBitmapCenter(bitmap)
+
+                    runOnUiThread {
+
+                        imgCaptured.visibility = View.VISIBLE
+
+                        imgCaptured.setImageBitmap(
+                            croppedBitmap
+                        )
+
+                        viewFinder.visibility = View.GONE
+                        btnRetake.visibility = View.VISIBLE
+                    }
+
+                    val base64Image =
+                        bitmapToBase64(croppedBitmap)
+
                     sendToCloudVision(base64Image)
                 }
 
-                override fun onError(exception: ImageCaptureException) {
-                    Log.e("CameraX", "Gagal memotret: ${exception.message}", exception)
+                override fun onError(
+                    exception: ImageCaptureException
+                ) {
+
+                    progressBar.visibility = View.GONE
+
                     btnCapture.isEnabled = true
+
+                    Log.e(
+                        "CameraX",
+                        exception.message ?: ""
+                    )
                 }
             }
         )
-    }
-
-    private fun imageProxyToBase64(image: ImageProxy): String {
-        val buffer = image.planes[0].buffer
-        val bytes = ByteArray(buffer.remaining())
-        buffer.get(bytes)
-        return Base64.encodeToString(bytes, Base64.NO_WRAP)
     }
 
     private fun sendToCloudVision(base64Image: String) {
@@ -147,23 +222,192 @@ class ScanActivity : AppCompatActivity() {
                     val hasilTeks = response.body()?.responses?.get(0)?.fullTextAnnotation?.text
 
                     if (hasilTeks != null) {
-                        Log.d("OCR_RESULT", "Hasil Deteksi: \n$hasilTeks")
-                        Toast.makeText(this@ScanActivity, "Berhasil! Cek Logcat.", Toast.LENGTH_LONG).show()
+
+                        val cleanedText =
+                            OCRTextCleaner.clean(hasilTeks)
+
+                        sendToGemini(cleanedText)
+
                     } else {
-                        Toast.makeText(this@ScanActivity, "Teks komposisi tidak ditemukan.", Toast.LENGTH_SHORT).show()
+
+                        progressBar.visibility = View.GONE
+
+                        btnCapture.isEnabled = true
+
+                        tvResult.visibility = View.VISIBLE
+
+                        tvResult.text = "Teks tidak ditemukan"
                     }
+
                 }
 
-                override fun onFailure(call: Call<VisionResponse>, t: Throwable) {
+                override fun onFailure(
+                    call: Call<VisionResponse>,
+                    t: Throwable
+                ) {
+
+                    progressBar.visibility = View.GONE
+
                     btnCapture.isEnabled = true
-                    Log.e("API_ERROR", t.message ?: "Unknown Error")
-                    Toast.makeText(this@ScanActivity, "Gagal menghubungi server", Toast.LENGTH_SHORT).show()
+
+                    tvResult.visibility = View.VISIBLE
+
+                    tvResult.text =
+                        "Gagal menghubungi server"
+
+                    Log.e(
+                        "API_ERROR",
+                        t.message ?: "Unknown Error"
+                    )
                 }
             })
+    }
+    private fun sendToGemini(
+        ocrText: String
+    ) {
+        Log.d(
+            "GEMINI_KEY",
+            BuildConfig.GEMINI_API_KEY
+        )
+        val limitedText =
+            ocrText.take(1500)
+
+        val prompt =
+            GeminiParser.buildPrompt(
+                ocrText
+            )
+
+        val request =
+            GeminiRequest(
+                contents = listOf(
+                    Content(
+                        parts = listOf(
+                            Part(prompt)
+                        )
+                    )
+                )
+            )
+
+        GeminiRetrofitClient.instance
+            .generateContent(
+                BuildConfig.GEMINI_API_KEY,
+                request
+            )
+            .enqueue(
+                object : Callback<GeminiResponse> {
+
+                    override fun onResponse(
+                        call: Call<GeminiResponse>,
+                        response: Response<GeminiResponse>
+                    ) {
+
+                        Log.d(
+                            "GEMINI_CODE",
+                            response.code().toString()
+                        )
+
+                        Log.d(
+                            "GEMINI_ERROR_BODY",
+                            response.errorBody()?.string() ?: "NO_ERROR"
+                        )
+
+                        progressBar.visibility =
+                            View.GONE
+
+                        val result =
+                            response.body()
+                                ?.candidates
+                                ?.firstOrNull()
+                                ?.content
+                                ?.parts
+                                ?.firstOrNull()
+                                ?.text
+
+                        Log.d(
+                            "GEMINI_JSON",
+                            result ?: "NULL"
+                        )
+
+                        tvResult.visibility =
+                            View.VISIBLE
+
+                        tvResult.text =
+                            result ?: "Gemini tidak mengembalikan data"
+                    }
+
+                    override fun onFailure(
+                        call: Call<GeminiResponse>,
+                        t: Throwable
+                    ) {
+
+                        progressBar.visibility =
+                            View.GONE
+
+                        tvResult.visibility =
+                            View.VISIBLE
+
+                        tvResult.text =
+                            t.message ?: "Unknown Error"
+
+                        Log.e(
+                            "GEMINI_ERROR",
+                            "FULL ERROR",
+                            t
+                        )
+                    }
+
+                }
+            )
     }
 
     override fun onDestroy() {
         super.onDestroy()
         cameraExecutor.shutdown()
     }
+    private fun cropBitmapCenter(
+        bitmap: Bitmap
+    ): Bitmap {
+
+        val cropWidth =
+            (bitmap.width * 0.75).toInt()
+
+        val cropHeight =
+            (cropWidth / 1.45).toInt()
+
+        val left =
+            (bitmap.width - cropWidth) / 2
+
+        val top =
+            (bitmap.height - cropHeight) / 2
+
+        return Bitmap.createBitmap(
+            bitmap,
+            left,
+            top,
+            cropWidth,
+            cropHeight
+        )
+    }
+    private fun bitmapToBase64(
+        bitmap: Bitmap
+    ): String {
+
+        val stream =
+            ByteArrayOutputStream()
+
+        bitmap.compress(
+            Bitmap.CompressFormat.JPEG,
+            90,
+            stream
+        )
+
+        val bytes =
+            stream.toByteArray()
+
+        return Base64.encodeToString(
+            bytes,
+            Base64.NO_WRAP
+        )
+    }
+
 }
