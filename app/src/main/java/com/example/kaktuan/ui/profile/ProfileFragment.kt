@@ -7,15 +7,15 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
-import com.example.kaktuan.databinding.ActivityProfileBinding // Pastikan nama import ini sesuai
+import com.example.kaktuan.databinding.FragmentProfileBinding // Pastikan nama import ini sesuai
 import com.example.kaktuan.firebase.firestore.FirestoreHelper
 import com.example.kaktuan.ui.auth.LoginActivity
 import com.google.firebase.auth.FirebaseAuth
 
-class ProfileActivity : Fragment() {
+class ProfileFragment : Fragment() {
 
     // Setup ViewBinding untuk Fragment
-    private var _binding: ActivityProfileBinding? = null
+    private var _binding: FragmentProfileBinding? = null
     private val binding get() = _binding!!
 
     private lateinit var auth: FirebaseAuth
@@ -25,7 +25,7 @@ class ProfileActivity : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = ActivityProfileBinding.inflate(inflater, container, false)
+        _binding = FragmentProfileBinding.inflate(inflater, container, false)
         return binding.root
     }
 
@@ -38,6 +38,12 @@ class ProfileActivity : Fragment() {
         // 1. Panggil fungsi untuk memuat data saat fragment dibuka
         muatDataProfil()
 
+        binding.btnEditProfil.setOnClickListener {
+            // Membuka BiodataActivity dengan mode Edit
+            val intent = Intent(requireActivity(), com.example.kaktuan.ui.profile.BiodataActivity::class.java)
+            intent.putExtra("IS_EDIT", true)
+            startActivity(intent)
+        }
         // 2. Logika untuk Tombol Logout
         binding.btnLogout.setOnClickListener {
             auth.signOut()
