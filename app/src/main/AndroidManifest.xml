@@ -17,15 +17,19 @@
         android:theme="@style/Theme.kaktuan">
 
         <activity
-            android:name=".ui.history.HistoryActivity"
+            android:name=".ui.history.HistoryFragment"
             android:exported="false" />
 
         <activity
-            android:name=".ui.profile.ProfileSetupActivity"
+            android:name=".ui.profile.ProfileFragment"
             android:exported="false" />
 
         <activity
             android:name=".ui.home.HomeActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.profile.BiodataActivity"
             android:exported="false" />
 
         <activity

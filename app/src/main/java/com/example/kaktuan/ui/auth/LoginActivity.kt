@@ -1,14 +1,16 @@
 package com.example.kaktuan.ui.auth
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import com.example.kaktuan.R
 import com.example.kaktuan.databinding.ActivityLoginBinding
 import com.example.kaktuan.firebase.firestore.FirestoreHelper
 import com.example.kaktuan.ui.home.HomeActivity
-import com.example.kaktuan.ui.profile.ProfileActivity // Pastikan import ini sesuai
+import com.example.kaktuan.ui.profile.BiodataActivity // Diubah menjadi BiodataActivity
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
@@ -23,7 +25,22 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var googleSignInClient: GoogleSignInClient
     private lateinit var firestoreHelper: FirestoreHelper
 
-    private val RC_SIGN_IN = 100
+    // =========================
+    // LAUNCHER GOOGLE SIGN-IN BARU
+    // =========================
+    private val googleSignInLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
+            try {
+                val account = task.getResult(ApiException::class.java)
+                firebaseAuthWithGoogle(account.idToken!!)
+            } catch (e: ApiException) {
+                Toast.makeText(this, "Google Sign In gagal", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -105,22 +122,9 @@ class LoginActivity : AppCompatActivity() {
     // =========================
 
     private fun signInGoogle() {
+        // Memanggil launcher baru, bukan startActivityForResult lagi
         val signInIntent = googleSignInClient.signInIntent
-        startActivityForResult(signInIntent, RC_SIGN_IN)
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-
-        if (requestCode == RC_SIGN_IN) {
-            val task = GoogleSignIn.getSignedInAccountFromIntent(data)
-            try {
-                val account = task.getResult(ApiException::class.java)
-                firebaseAuthWithGoogle(account.idToken!!)
-            } catch (e: ApiException) {
-                Toast.makeText(this, "Google Sign In gagal", Toast.LENGTH_SHORT).show()
-            }
-        }
+        googleSignInLauncher.launch(signInIntent)
     }
 
     // =========================
@@ -154,8 +158,8 @@ class LoginActivity : AppCompatActivity() {
                 // Profil sudah ada, ke halaman utama
                 startActivity(Intent(this, HomeActivity::class.java))
             } else {
-                // Profil kosong, ke pengisian biodata
-                startActivity(Intent(this, ProfileActivity::class.java))
+                // Profil kosong, ke pengisian biodata (Sudah diubah ke BiodataActivity)
+                startActivity(Intent(this, BiodataActivity::class.java))
             }
             finish() // Menutup halaman login
         }
