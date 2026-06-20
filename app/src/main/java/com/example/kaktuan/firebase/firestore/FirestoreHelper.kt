@@ -66,5 +66,24 @@ class FirestoreHelper {
                 onComplete(null)
             }
     }
+
+    // =========================
+    // AMBIL RIWAYAT SCAN USER
+    // =========================
+    fun getScanHistory(uid: String, onComplete: (List<com.example.kaktuan.model.ScanHistory>?) -> Unit) {
+        db.collection("users").document(uid)
+            .collection("scanHistory")
+            .get()
+            .addOnSuccessListener { result ->
+                val list = result.documents.mapNotNull { doc ->
+                    doc.toObject(com.example.kaktuan.model.ScanHistory::class.java)
+                }
+                onComplete(list)
+            }
+            .addOnFailureListener { e ->
+                Log.e("FirestoreHelper", "Gagal mengambil riwayat scan: ", e)
+                onComplete(null)
+            }
+    }
 }
 
