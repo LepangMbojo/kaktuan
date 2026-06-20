@@ -13,5 +13,7 @@
 
     <style name="Theme.kaktuan"
         parent="Base.Theme.kaktuan" />
-
+    <style name="CustomBottomNavText">
+        <item name="android:textSize">9sp</item>
+    </style>
 </resources>

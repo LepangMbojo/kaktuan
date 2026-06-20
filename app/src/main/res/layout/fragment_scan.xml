@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<androidx.constraintlayout.widget.ConstraintLayout
+
+    xmlns:android="http://schemas.android.com/apk/res/android"
+
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+
+    android:layout_width="match_parent"
+
+    android:layout_height="match_parent"
+
+    android:background="#F5F7FA">
+
+
+
+    <ImageView
+
+        android:id="@+id/icMenu"
+
+        android:layout_width="24dp"
+
+        android:layout_height="24dp"
+
+        android:layout_marginStart="24dp"
+
+        android:layout_marginTop="32dp"
+
+        android:src="@android:drawable/ic_menu_sort_by_size"
+
+        app:tint="#000000"
+
+        app:layout_constraintStart_toStartOf="parent"
+
+        app:layout_constraintTop_toTopOf="parent" />
+
+
+
+    <TextView
+
+        android:id="@+id/tvHeaderTitle"
+
+        android:layout_width="wrap_content"
+
+        android:layout_height="wrap_content"
+
+        android:text="Scan Komposisi"
+
+        android:textColor="#000000"
+
+        android:textSize="16sp"
+
+        android:textStyle="bold"
+
+        app:layout_constraintBottom_toBottomOf="@id/icMenu"
+
+        app:layout_constraintEnd_toEndOf="parent"
+
+        app:layout_constraintStart_toStartOf="parent"
+
+        app:layout_constraintTop_toTopOf="@id/icMenu" />
+
+
+
+    <androidx.cardview.widget.CardView
+
+        android:id="@+id/cameraCard"
+
+        android:layout_width="0dp"
+
+        android:layout_height="0dp"
+
+        android:layout_marginHorizontal="24dp"
+
+        android:layout_marginTop="32dp"
+
+        android:layout_marginBottom="32dp"
+
+        app:cardCornerRadius="32dp"
+
+        app:cardElevation="0dp"
+
+        app:layout_constraintBottom_toTopOf="@id/btnCapture"
+
+        app:layout_constraintEnd_toEndOf="parent"
+
+        app:layout_constraintStart_toStartOf="parent"
+
+        app:layout_constraintTop_toBottomOf="@id/tvHeaderTitle">
+
+
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+
+            android:layout_width="match_parent"
+
+            android:layout_height="match_parent"
+
+            android:background="#000000">
+
+
+
+            <androidx.camera.view.PreviewView
+
+                android:id="@+id/viewFinder"
+
+                android:layout_width="match_parent"
+
+                android:layout_height="match_parent" />
+
+
+
+            <ImageView
+
+                android:id="@+id/imgCaptured"
+
+                android:layout_width="match_parent"
+
+                android:layout_height="match_parent"
+
+                android:scaleType="centerCrop"
+
+                android:visibility="gone" />
+
+
+
+            <View
+
+                android:id="@+id/darkOverlay"
+
+                android:layout_width="match_parent"
+
+                android:layout_height="match_parent"
+
+                android:background="#4D000000" />
+
+
+
+            <TextView
+
+                android:id="@+id/tvInstruction"
+
+                android:layout_width="wrap_content"
+
+                android:layout_height="wrap_content"
+
+                android:layout_marginTop="48dp"
+
+                android:text="Arahkan tabel nutrisi atau\nkomposisi ke dalam kotak"
+
+                android:textAlignment="center"
+
+                android:textColor="#FFFFFF"
+
+                android:textSize="14sp"
+
+                app:layout_constraintEnd_toEndOf="parent"
+
+                app:layout_constraintStart_toStartOf="parent"
+
+                app:layout_constraintTop_toTopOf="parent" />
+
+
+
+            <FrameLayout
+
+                android:id="@+id/scanFrame"
+
+                android:layout_width="220dp"
+
+                android:layout_height="220dp"
+
+                android:background="@drawable/bg_scan_frame"
+
+                app:layout_constraintBottom_toBottomOf="parent"
+
+                app:layout_constraintEnd_toEndOf="parent"
+
+                app:layout_constraintStart_toStartOf="parent"
+
+                app:layout_constraintTop_toBottomOf="@id/tvInstruction"
+
+                app:layout_constraintVertical_bias="0.4">
+
+
+
+                <View
+
+                    android:id="@+id/scanLine"
+
+                    android:layout_width="match_parent"
+
+                    android:layout_height="2dp"
+
+                    android:layout_gravity="top"
+
+                    android:background="#38C6A5" />
+
+            </FrameLayout>
+
+
+
+            <ProgressBar
+
+                android:id="@+id/progressBar"
+
+                android:layout_width="48dp"
+
+                android:layout_height="48dp"
+
+                android:indeterminateTint="#38C6A5"
+
+                android:visibility="gone"
+
+                app:layout_constraintBottom_toBottomOf="parent"
+
+                app:layout_constraintEnd_toEndOf="parent"
+
+                app:layout_constraintStart_toStartOf="parent"
+
+                app:layout_constraintTop_toTopOf="parent" />
+
+
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </androidx.cardview.widget.CardView>
+
+
+
+    <Button
+
+        android:id="@+id/btnCapture"
+
+        android:layout_width="0dp"
+
+        android:layout_height="56dp"
+
+        android:layout_marginHorizontal="32dp"
+
+        android:layout_marginBottom="48dp"
+
+        android:backgroundTint="#245F58"
+
+        android:text="Scan Komposisi"
+
+        android:textAllCaps="false"
+
+        android:textColor="#FFFFFF"
+
+        android:textSize="16sp"
+
+        android:textStyle="bold"
+
+        app:cornerRadius="16dp"
+
+        app:layout_constraintBottom_toBottomOf="parent"
+
+        app:layout_constraintEnd_toEndOf="parent"
+
+        app:layout_constraintStart_toStartOf="parent" />
+
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

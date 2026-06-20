@@ -9,17 +9,17 @@
 
     <item
         android:id="@+id/nav_scan"
-        android:icon="@drawable/scan"
+        android:icon="@drawable/scanner"
         android:title="Scan"/>
 
     <item
         android:id="@+id/nav_history"
-        android:icon="@drawable/archive"
+        android:icon="@drawable/history"
         android:title="History"/>
 
     <item
         android:id="@+id/nav_profile"
-        android:icon="@drawable/account"
+        android:icon="@drawable/user"
         android:title="Profile"/>
 
 </menu>

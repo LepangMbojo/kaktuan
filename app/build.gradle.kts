@@ -94,4 +94,6 @@ dependencies {
     implementation("com.google.android.gms:play-services-auth:20.7.0")
 
     implementation("androidx.exifinterface:exifinterface:1.3.7")
+    // library Glide untuk memuat gambar
+    implementation("com.github.bumptech.glide:glide:4.16.0")
 }

@@ -10,7 +10,7 @@ import com.example.kaktuan.databinding.ActivityHomeBinding
 // PASTIKAN IMPORT INI BENAR (Mengarah ke Fragment, bukan Activity)
 import com.example.kaktuan.ui.history.HistoryFragment
 import com.example.kaktuan.ui.profile.ProfileFragment
-import com.example.kaktuan.ui.scan.ScanActivity
+import com.example.kaktuan.ui.scan.ScanFragment
 
 class HomeActivity : AppCompatActivity() {
 
@@ -22,37 +22,33 @@ class HomeActivity : AppCompatActivity() {
         binding = ActivityHomeBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // 1. TAMPILKAN DASHBOARD SECARA OTOMATIS SAAT APLIKASI DIBUKA
+        // 1. Tampilkan Dashboard secara otomatis
         if (savedInstanceState == null) {
             replaceFragment(HomeFragment())
-            // Pastikan menu navigasi bawah juga menyorot tab Home
             binding.bottomNavigation.selectedItemId = R.id.nav_home
         }
 
-        // 2. LOGIKA KLIK BOTTOM NAVIGATION
+        // 2. Satu-satunya Listener untuk navigasi
         binding.bottomNavigation.setOnItemSelectedListener { item ->
-            when (item.itemId) {
-                R.id.nav_home -> {
-                    // Panggil HomeFragment, bukan Toast
-                    replaceFragment(HomeFragment())
-                    true
-                }
-                R.id.nav_scan -> {
-                    // Scan tetap pakai Intent karena membuka kamera
-                    startActivity(Intent(this, ScanActivity::class.java))
-                    false // Return false agar highlight menu tetap di tab sebelumnya
-                }
-                R.id.nav_history -> {
-                    // Panggil HistoryFragment, bukan Toast
-                    replaceFragment(HistoryFragment())
-                    true
-                }
-                R.id.nav_profile -> {
-                    // Panggil ProfileFragment (Pastikan namanya Fragment, bukan Activity)
-                    replaceFragment(ProfileFragment())
-                    true
-                }
-                else -> false
+
+            // Pilih fragmen berdasarkan ID
+            val selectedFragment = when (item.itemId) {
+                R.id.nav_home -> HomeFragment()
+                R.id.nav_scan -> ScanFragment()
+                R.id.nav_history -> HistoryFragment()
+                R.id.nav_profile -> ProfileFragment()
+                else -> null
+            }
+
+            // Jalankan transaksi dengan animasi fade
+            if (selectedFragment != null) {
+                supportFragmentManager.beginTransaction()
+                    .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out)
+                    .replace(R.id.frameContainer, selectedFragment)
+                    .commit()
+                true
+            } else {
+                false
             }
         }
     }
