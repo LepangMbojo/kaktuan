@@ -6,27 +6,27 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
+import com.example.kaktuan.BuildConfig
 import com.example.kaktuan.R
 import com.example.kaktuan.databinding.ActivityLoginBinding
-import com.example.kaktuan.firebase.firestore.FirestoreHelper
+import com.example.kaktuan.supabase.SupabaseAuthHelper
 import com.example.kaktuan.ui.home.HomeActivity
-import com.example.kaktuan.ui.profile.BiodataActivity // Diubah menjadi BiodataActivity
+import com.example.kaktuan.ui.profile.BiodataActivity
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.common.api.ApiException
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.GoogleAuthProvider
+import kotlinx.coroutines.launch
 
 class LoginActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityLoginBinding
-    private lateinit var auth: FirebaseAuth
     private lateinit var googleSignInClient: GoogleSignInClient
-    private lateinit var firestoreHelper: FirestoreHelper
+    private lateinit var authHelper: SupabaseAuthHelper
 
     // =========================
-    // LAUNCHER GOOGLE SIGN-IN BARU
+    // LAUNCHER GOOGLE SIGN-IN
     // =========================
     private val googleSignInLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
@@ -35,7 +35,9 @@ class LoginActivity : AppCompatActivity() {
             val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
             try {
                 val account = task.getResult(ApiException::class.java)
-                firebaseAuthWithGoogle(account.idToken!!)
+                account.idToken?.let { token ->
+                    supabaseGoogleLogin(token)
+                } ?: Toast.makeText(this, "Token Google Kosong", Toast.LENGTH_SHORT).show()
             } catch (e: ApiException) {
                 Toast.makeText(this, "Google Sign In gagal", Toast.LENGTH_SHORT).show()
             }
@@ -44,31 +46,25 @@ class LoginActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Firebase & Firestore Helper
-        auth = FirebaseAuth.getInstance()
-        firestoreHelper = FirestoreHelper()
+        // Inisialisasi Helper Supabase
+        authHelper = SupabaseAuthHelper()
 
         // =========================
         // GOOGLE SIGN IN CONFIG
         // =========================
-
-        val gso = GoogleSignInOptions.Builder(
-            GoogleSignInOptions.DEFAULT_SIGN_IN
-        )
-            .requestIdToken(getString(R.string.default_web_client_id))
+        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestIdToken(BuildConfig.GOOGLE_WEB_CLIENT_ID)
             .requestEmail()
             .build()
 
         googleSignInClient = GoogleSignIn.getClient(this, gso)
 
         // =========================
-        // EMAIL LOGIN
+        // KLIK TOMBOL LOGIN EMAIL
         // =========================
-
         binding.btnLogin.setOnClickListener {
             val email = binding.etEmail.text.toString().trim()
             val password = binding.etPassword.text.toString().trim()
@@ -76,92 +72,67 @@ class LoginActivity : AppCompatActivity() {
             if (email.isEmpty() || password.isEmpty()) {
                 Toast.makeText(this, "Email dan Password wajib diisi", Toast.LENGTH_SHORT).show()
             } else {
-                binding.btnLogin.isEnabled = false // Mencegah klik ganda
                 loginUser(email, password)
             }
         }
 
         // =========================
-        // GOOGLE LOGIN BUTTON
+        // KLIK TOMBOL GOOGLE
         // =========================
-
         binding.btnGoogleLogin.setOnClickListener {
-            signInGoogle()
+            val signInIntent = googleSignInClient.signInIntent
+            googleSignInLauncher.launch(signInIntent)
         }
 
         // =========================
-        // REGISTER
+        // KLIK TOMBOL REGISTER
         // =========================
-
         binding.tvRegister.setOnClickListener {
             startActivity(Intent(this, RegisterActivity::class.java))
         }
     }
 
-    // =========================
-    // EMAIL LOGIN FUNCTION
-    // =========================
-
     private fun loginUser(email: String, password: String) {
-        auth.signInWithEmailAndPassword(email, password)
-            .addOnCompleteListener(this) { task ->
-                if (task.isSuccessful) {
-                    val uid = auth.currentUser?.uid
-                    if (uid != null) {
-                        cekProfil(uid)
-                    }
-                } else {
-                    binding.btnLogin.isEnabled = true
-                    Toast.makeText(this, "Login gagal: ${task.exception?.message}", Toast.LENGTH_SHORT).show()
-                }
+        binding.btnLogin.isEnabled = false
+        binding.btnLogin.text = "Loading..."
+
+        lifecycleScope.launch {
+            val result = authHelper.loginWithEmail(email, password)
+
+            result.onSuccess { uid ->
+                cekProfil(uid)
+            }.onFailure { exception ->
+                binding.btnLogin.isEnabled = true
+                binding.btnLogin.text = "Login"
+                Toast.makeText(this@LoginActivity, "Login gagal: ${exception.message}", Toast.LENGTH_LONG).show()
             }
+        }
     }
 
-    // =========================
-    // GOOGLE SIGN IN
-    // =========================
+    private fun supabaseGoogleLogin(idToken: String) {
+        lifecycleScope.launch {
+            val result = authHelper.loginWithGoogleIdToken(idToken)
 
-    private fun signInGoogle() {
-        // Memanggil launcher baru, bukan startActivityForResult lagi
-        val signInIntent = googleSignInClient.signInIntent
-        googleSignInLauncher.launch(signInIntent)
-    }
-
-    // =========================
-    // FIREBASE GOOGLE AUTH
-    // =========================
-
-    private fun firebaseAuthWithGoogle(idToken: String) {
-        val credential = GoogleAuthProvider.getCredential(idToken, null)
-        auth.signInWithCredential(credential)
-            .addOnCompleteListener(this) { task ->
-                if (task.isSuccessful) {
-                    val uid = auth.currentUser?.uid
-                    if (uid != null) {
-                        cekProfil(uid)
-                    }
-                } else {
-                    Toast.makeText(this, "Firebase Google Login gagal", Toast.LENGTH_SHORT).show()
-                }
+            result.onSuccess { uid ->
+                cekProfil(uid)
+            }.onFailure { exception ->
+                Toast.makeText(this@LoginActivity, "Google Login gagal: ${exception.message}", Toast.LENGTH_LONG).show()
             }
+        }
     }
-
-    // =========================
-    // CEK PROFIL FIRESTORE
-    // =========================
 
     private fun cekProfil(uid: String) {
         Toast.makeText(this, "Mengecek data profil...", Toast.LENGTH_SHORT).show()
 
-        firestoreHelper.checkUserExists(uid) { isExists ->
+        lifecycleScope.launch {
+            val isExists = authHelper.checkProfileExists(uid)
+
             if (isExists) {
-                // Profil sudah ada, ke halaman utama
-                startActivity(Intent(this, HomeActivity::class.java))
+                startActivity(Intent(this@LoginActivity, HomeActivity::class.java))
             } else {
-                // Profil kosong, ke pengisian biodata (Sudah diubah ke BiodataActivity)
-                startActivity(Intent(this, BiodataActivity::class.java))
+                startActivity(Intent(this@LoginActivity, BiodataActivity::class.java))
             }
-            finish() // Menutup halaman login
+            finish()
         }
     }
 }

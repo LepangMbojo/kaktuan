@@ -11,7 +11,7 @@ object GeminiParser {
         gender: String?
     ): String {
 
-        // 1. Susun narasi profil fisik dengan tambahan gender
+        // 1. Susun narasi profil fisik
         val infoFisik = StringBuilder("Profil pengguna saat ini: ")
         infoFisik.append(if (!gender.isNullOrEmpty()) "Jenis kelamin $gender. " else "")
         infoFisik.append(if (umur != null && umur > 0) "Umur $umur tahun. " else "Umur tidak diketahui. ")
@@ -34,12 +34,20 @@ object GeminiParser {
         $instruksiKesehatan
 
         Tugas Anda:
-        Evaluasi apakah nilai informasi nilai gizi (seperti energi total, gula, lemak, natrium) dan bahan-bahannya proporsional atau berbahaya bagi profil tubuh dan penyakit pengguna di atas. Perhitungkan juga standar Angka Kecukupan Gizi (AKG) yang berbeda berdasarkan jenis kelamin.
+        1. Identifikasi Nama Produk.
+        2. Tentukan 'health_score' (0-100):
+           - 100: Sangat sehat/aman.
+           - 50-70: Perlu dibatasi.
+           - 0-49: Sangat tidak disarankan untuk profil pengguna.
+           - Berikan penalti skor besar jika kandungan (gula/garam/lemak/alergen) berbahaya bagi riwayat penyakit pengguna.
+        3. Evaluasi gizi.
 
         Kembalikan HANYA JSON VALID. Dilarang menambahkan teks pengantar, penutup, atau markdown (seperti ```json).
 
         Format:
         {
+          "product_name": "Nama produk di sini",
+          "health_score": 0,
           "ingredients": [],
           "nutrition": {
             "serving_size": "",
@@ -53,7 +61,7 @@ object GeminiParser {
           },
           "analysis": {
             "is_safe": true,
-            "conclusion": "Tuliskan kesimpulan keamanan gizi spesifik berdasarkan jenis kelamin, umur, berat badan, tinggi badan, dan riwayat penyakit pengguna di sini dalam 2-3 kalimat.",
+            "conclusion": "Kesimpulan keamanan gizi spesifik dalam 2-3 kalimat.",
             "specific_warnings": ["Sebutkan peringatan bahan atau kandungan yang melebihi batas harian pengguna"]
           }
         }

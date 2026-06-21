@@ -1,53 +1,128 @@
 package com.example.kaktuan.ui.profile
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import com.example.kaktuan.databinding.ActivityBiodataBinding // Pastikan import binding ini benar
-import com.example.kaktuan.firebase.firestore.FirestoreHelper
+import androidx.lifecycle.lifecycleScope
+import com.bumptech.glide.Glide
+import com.example.kaktuan.R
+import com.example.kaktuan.databinding.ActivityBiodataBinding
 import com.example.kaktuan.model.User
+import com.example.kaktuan.supabase.SupabaseClient
+import com.example.kaktuan.supabase.SupabaseDatabaseHelper
 import com.example.kaktuan.ui.home.HomeActivity
-import com.google.firebase.auth.FirebaseAuth
+import io.github.jan.supabase.gotrue.auth
+import io.github.jan.supabase.storage.storage
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.util.UUID
 
 class BiodataActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityBiodataBinding
-    private lateinit var auth: FirebaseAuth
-    private lateinit var firestoreHelper: FirestoreHelper
+    private lateinit var databaseHelper: SupabaseDatabaseHelper
+
+    private var isEditMode = false
+    private var selectedImageUri: Uri? = null
+    private var existingProfilePicUrl: String = ""
+
+    private val galleryLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        if (uri != null) {
+            selectedImageUri = uri
+            binding.ivProfileSetup.imageTintList = null
+            binding.ivProfileSetup.setImageURI(uri)
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityBiodataBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        auth = FirebaseAuth.getInstance()
-        firestoreHelper = FirestoreHelper()
+        databaseHelper = SupabaseDatabaseHelper()
+        isEditMode = intent.getBooleanExtra("IS_EDIT", false)
 
-        binding.btnSimpan.setOnClickListener {
-            simpanBiodata()
+        setupClickListeners()
+
+        if (isEditMode) {
+            muatDataLama()
+        }
+    }
+
+    private fun setupClickListeners() {
+        binding.btnBack.setOnClickListener { finish() }
+        binding.btnChangePhoto.setOnClickListener { galleryLauncher.launch("image/*") }
+        binding.btnSimpan.setOnClickListener { simpanBiodata() }
+    }
+
+    private fun muatDataLama() {
+        val session = SupabaseClient.client.auth.currentSessionOrNull()
+        val uid = session?.user?.id ?: return
+
+        binding.btnSimpan.isEnabled = false
+        binding.btnSimpan.text = "Memuat data..."
+
+        databaseHelper.getUserProfile(uid) { user ->
+            if (user != null) {
+                binding.etNama.setText(user.name)
+                binding.etUmur.setText(user.age.toString())
+                binding.etTinggi.setText(user.height.toString())
+                binding.etBerat.setText(user.weight.toString())
+
+                if (user.gender == "Laki-laki") binding.rbLakiLaki.isChecked = true
+                else if (user.gender == "Perempuan") binding.rbPerempuan.isChecked = true
+
+                binding.etPenyakit.setText(user.healthConditions.joinToString(", "))
+
+                existingProfilePicUrl = user.profilePictureUrl ?: ""
+
+                if (existingProfilePicUrl.isEmpty()) {
+                    val metadata = session.user?.userMetadata
+                    existingProfilePicUrl = metadata?.get("avatar_url")?.toString()?.replace("\"", "")
+                        ?: metadata?.get("picture")?.toString()?.replace("\"", "")
+                                ?: ""
+                }
+
+                if (existingProfilePicUrl.isNotEmpty()) {
+                    binding.ivProfileSetup.imageTintList = null
+                    Glide.with(this)
+                        .load(existingProfilePicUrl)
+                        .circleCrop()
+                        .placeholder(R.drawable.user)
+                        .error(R.drawable.user) // Tambahkan error handling
+                        .into(binding.ivProfileSetup)
+                }
+
+                binding.btnSimpan.isEnabled = true
+                binding.btnSimpan.text = "Simpan Profil"
+            } else {
+                binding.btnSimpan.isEnabled = true
+                binding.btnSimpan.text = "Simpan Profil"
+                Toast.makeText(this, "Gagal memuat profil lama", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
     private fun simpanBiodata() {
-        // Ambil UID dan Email dari user yang sedang login
-        val uid = auth.currentUser?.uid ?: return
-        val email = auth.currentUser?.email ?: ""
+        val session = SupabaseClient.client.auth.currentSessionOrNull()
+        val uid = session?.user?.id ?: return
+        val email = session?.user?.email ?: ""
 
-        // Ambil teks dari kolom input
         val name = binding.etNama.text.toString().trim()
         val ageStr = binding.etUmur.text.toString().trim()
         val heightStr = binding.etTinggi.text.toString().trim()
         val weightStr = binding.etBerat.text.toString().trim()
         val penyakitStr = binding.etPenyakit.text.toString().trim()
 
-        // 1. Validasi Input Kosong
         if (name.isEmpty() || ageStr.isEmpty() || heightStr.isEmpty() || weightStr.isEmpty()) {
             Toast.makeText(this, "Mohon lengkapi nama, umur, tinggi, dan berat badan", Toast.LENGTH_SHORT).show()
             return
         }
 
-        // 2. Mendapatkan Jenis Kelamin dari RadioGroup
         val gender = when (binding.rgJenisKelamin.checkedRadioButtonId) {
             binding.rbLakiLaki.id -> "Laki-laki"
             binding.rbPerempuan.id -> "Perempuan"
@@ -57,19 +132,59 @@ class BiodataActivity : AppCompatActivity() {
             }
         }
 
-        // 3. Konversi tipe data String ke Int/Double sesuai Data Class
         val age = ageStr.toIntOrNull() ?: 0
         val height = heightStr.toDoubleOrNull() ?: 0.0
         val weight = weightStr.toDoubleOrNull() ?: 0.0
+        val healthConditions = if (penyakitStr.isNotEmpty()) penyakitStr.split(",").map { it.trim() } else emptyList()
 
-        // 4. Memecah penyakit menjadi List<String> (jika dikosongkan, kirim list kosong)
-        val healthConditions = if (penyakitStr.isNotEmpty()) {
-            penyakitStr.split(",").map { it.trim() }
+        binding.btnSimpan.isEnabled = false
+        binding.btnSimpan.text = "Menyimpan..."
+
+        if (selectedImageUri != null) {
+            uploadFotoDanSimpanData(uid, email, name, age, gender, height, weight, healthConditions)
         } else {
-            emptyList()
+            simpanKeSupabase(uid, email, name, age, gender, height, weight, healthConditions, existingProfilePicUrl)
         }
+    }
 
-        // 5. Bungkus semua data ke dalam Objek User
+    private fun uploadFotoDanSimpanData(
+        uid: String, email: String, name: String, age: Int, gender: String,
+        height: Double, weight: Double, healthConditions: List<String>
+    ) {
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                // Konversi URI gambar menjadi ByteArray
+                val inputStream = contentResolver.openInputStream(selectedImageUri!!)
+                val byteArray = inputStream?.readBytes()
+
+                if (byteArray != null) {
+                    val fileName = "${uid}_${UUID.randomUUID()}.jpg"
+                    val bucket = SupabaseClient.client.storage["avatars"] // Mengarah ke bucket yang benar
+
+                    // Upload ke Supabase
+                    bucket.upload(fileName, byteArray)
+
+                    // Dapatkan URL Publik
+                    val newProfilePicUrl = bucket.publicUrl(fileName)
+
+                    withContext(Dispatchers.Main) {
+                        simpanKeSupabase(uid, email, name, age, gender, height, weight, healthConditions, newProfilePicUrl)
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@BiodataActivity, "Gagal mengunggah foto: ${e.message}", Toast.LENGTH_SHORT).show()
+                    binding.btnSimpan.isEnabled = true
+                    binding.btnSimpan.text = "Simpan Profil"
+                }
+            }
+        }
+    }
+
+    private fun simpanKeSupabase(
+        uid: String, email: String, name: String, age: Int, gender: String,
+        height: Double, weight: Double, healthConditions: List<String>, profilePicUrl: String
+    ) {
         val userProfile = User(
             uid = uid,
             email = email,
@@ -79,24 +194,23 @@ class BiodataActivity : AppCompatActivity() {
             weight = weight,
             height = height,
             healthConditions = healthConditions,
-            profileCompleted = true // Menandakan user sudah mengisi form
+            profilePictureUrl = profilePicUrl,
+            profileCompleted = true
         )
 
-        // Nonaktifkan tombol sementara agar tidak diklik dua kali
-        binding.btnSimpan.isEnabled = false
-        Toast.makeText(this, "Menyimpan data...", Toast.LENGTH_SHORT).show()
-
-        // 6. Kirim ke Firestore
-        firestoreHelper.saveUserProfile(userProfile) { success, errorMessage ->
+        databaseHelper.saveUserProfile(userProfile) { success, errorMessage ->
             if (success) {
                 Toast.makeText(this, "Profil berhasil disimpan!", Toast.LENGTH_SHORT).show()
-
-                // Lempar ke HomeActivity
-                startActivity(Intent(this, HomeActivity::class.java))
-                finish()
+                if (isEditMode) {
+                    finish()
+                } else {
+                    startActivity(Intent(this, HomeActivity::class.java))
+                    finish()
+                }
             } else {
                 binding.btnSimpan.isEnabled = true
-                Toast.makeText(this, "Gagal menyimpan: $errorMessage", Toast.LENGTH_LONG).show()
+                binding.btnSimpan.text = "Simpan Profil"
+                Toast.makeText(this, "Gagal menyimpan biodata: $errorMessage", Toast.LENGTH_LONG).show()
             }
         }
     }

@@ -17,7 +17,7 @@
         android:theme="@style/Theme.kaktuan">
 
         <activity
-            android:name=".ui.home.HomeActivity"
+            android:name=".ui.auth.LoginActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -38,7 +38,7 @@
             android:exported="false" />
 
         <activity
-            android:name=".ui.auth.LoginActivity"
+            android:name=".ui.home.HomeActivity"
             android:exported="false" />
 
         <activity

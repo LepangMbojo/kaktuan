@@ -2,99 +2,80 @@ package com.example.kaktuan.ui.history
 
 import android.graphics.Color
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.example.kaktuan.R
+import com.example.kaktuan.databinding.ItemHistoryBinding
 import com.example.kaktuan.model.ScanHistory
-import com.google.android.material.card.MaterialCardView
 import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-import java.util.concurrent.TimeUnit
+import java.util.*
 
 class HistoryAdapter(
-    private val items: List<ScanHistory>,
-    private val onClick: (ScanHistory) -> Unit
+    private var listHistory: List<ScanHistory>,
+    private val onItemClick: (ScanHistory) -> Unit,
+    private val onEditClick: (ScanHistory) -> Unit
 ) : RecyclerView.Adapter<HistoryAdapter.HistoryViewHolder>() {
 
-    inner class HistoryViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val tvNamaProduk: TextView = itemView.findViewById(R.id.tvNamaProduk)
-        val tvWaktu: TextView = itemView.findViewById(R.id.tvWaktu)
-        val tvRekomendasiSingkat: TextView = itemView.findViewById(R.id.tvRekomendasiSingkat)
-        val tvBadgeStatus: TextView = itemView.findViewById(R.id.tvBadgeStatus)
-        val tvHealthScore: TextView = itemView.findViewById(R.id.tvHealthScore)
-        val tvScoreIcon: TextView = itemView.findViewById(R.id.tvScoreIcon)
-        val cvIconBg: MaterialCardView = itemView.findViewById(R.id.cvIconBg)
+    inner class HistoryViewHolder(val binding: ItemHistoryBinding) : RecyclerView.ViewHolder(binding.root) {
+        fun bind(history: ScanHistory) {
+
+            val score = history.healthScore ?: 0
+
+            binding.tvNamaProduk.text = history.productName
+            binding.tvHealthScore.text = score.toString()
+
+            if (score < 40) {
+
+                binding.tvBadgeStatus.text = "Bahaya"
+                binding.tvBadgeStatus.setTextColor(Color.parseColor("#EF4444"))
+                binding.tvBadgeStatus.setBackgroundResource(R.drawable.bg_badge_red)
+
+                binding.tvScoreIcon.text = "😨"
+                binding.tvHealthScore.setTextColor(Color.parseColor("#EF4444"))
+
+            } else {
+
+                binding.tvBadgeStatus.text = "Aman"
+                binding.tvBadgeStatus.setTextColor(Color.parseColor("#245F58"))
+                binding.tvBadgeStatus.setBackgroundResource(R.drawable.bg_badge_green)
+
+                binding.tvScoreIcon.text = "😊"
+                binding.tvHealthScore.setTextColor(Color.parseColor("#38C6A5"))
+            }
+
+            val sdf = SimpleDateFormat(
+                "dd MMM yyyy, HH:mm",
+                Locale.getDefault()
+            )
+
+            val date = Date(history.timestamp)
+
+            binding.tvWaktu.text = sdf.format(date)
+
+            binding.root.setOnClickListener {
+                onItemClick(history)
+            }
+
+            binding.btnEditName.setOnClickListener {
+                onEditClick(history)
+            }
+        }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): HistoryViewHolder {
-        val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_history, parent, false)
-        return HistoryViewHolder(view)
+        val binding = ItemHistoryBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+        return HistoryViewHolder(binding)
     }
 
     override fun onBindViewHolder(holder: HistoryViewHolder, position: Int) {
-        val item = items[position]
-
-        // Nama produk — fallback jika kosong
-        holder.tvNamaProduk.text = item.productName.ifEmpty { "Produk Tanpa Nama" }
-
-        // Rekomendasi singkat
-        holder.tvRekomendasiSingkat.text = item.recommendation.ifEmpty { "Tidak ada rekomendasi." }
-
-        // Skor kesehatan
-        holder.tvHealthScore.text = "Skor: ${item.healthScore}"
-
-        // Waktu relatif
-        holder.tvWaktu.text = getRelativeTime(item.timestamp)
-
-        // Badge + ikon berdasarkan healthScore
-        when {
-            item.healthScore >= 70 -> {
-                holder.tvBadgeStatus.text = "Cocok"
-                holder.tvBadgeStatus.setTextColor(Color.parseColor("#245F58"))
-                holder.tvBadgeStatus.setBackgroundResource(R.drawable.bg_badge_green)
-                holder.tvScoreIcon.text = "😊"
-                holder.cvIconBg.setCardBackgroundColor(Color.parseColor("#E8F1F0"))
-                holder.tvHealthScore.setTextColor(Color.parseColor("#245F58"))
-            }
-            item.healthScore >= 40 -> {
-                holder.tvBadgeStatus.text = "Perhatikan"
-                holder.tvBadgeStatus.setTextColor(Color.parseColor("#C07000"))
-                holder.tvBadgeStatus.setBackgroundResource(R.drawable.bg_badge_orange)
-                holder.tvScoreIcon.text = "⚠️"
-                holder.cvIconBg.setCardBackgroundColor(Color.parseColor("#FFF3E8"))
-                holder.tvHealthScore.setTextColor(Color.parseColor("#C07000"))
-            }
-            else -> {
-                holder.tvBadgeStatus.text = "Hindari"
-                holder.tvBadgeStatus.setTextColor(Color.parseColor("#C62828"))
-                holder.tvBadgeStatus.setBackgroundResource(R.drawable.bg_badge_red)
-                holder.tvScoreIcon.text = "⛔"
-                holder.cvIconBg.setCardBackgroundColor(Color.parseColor("#FDECEA"))
-                holder.tvHealthScore.setTextColor(Color.parseColor("#C62828"))
-            }
-        }
-
-        // Klik item
-        holder.itemView.setOnClickListener { onClick(item) }
+        holder.bind(listHistory[position])
     }
 
-    override fun getItemCount() = items.size
+    override fun getItemCount(): Int = listHistory.size
 
-    // Mengubah timestamp menjadi teks relatif
-    private fun getRelativeTime(timestamp: Long): String {
-        if (timestamp == 0L) return "-"
-        val now = System.currentTimeMillis()
-        val diff = now - timestamp
-        return when {
-            diff < TimeUnit.MINUTES.toMillis(1) -> "Baru saja"
-            diff < TimeUnit.HOURS.toMillis(1) -> "${TimeUnit.MILLISECONDS.toMinutes(diff)} mnt lalu"
-            diff < TimeUnit.DAYS.toMillis(1) -> "${TimeUnit.MILLISECONDS.toHours(diff)} jam lalu"
-            diff < TimeUnit.DAYS.toMillis(7) -> "${TimeUnit.MILLISECONDS.toDays(diff)} hari lalu"
-            else -> SimpleDateFormat("dd MMM yyyy", Locale("id")).format(Date(timestamp))
-        }
+    fun updateData(newList: List<ScanHistory>) {
+        listHistory = newList
+        notifyDataSetChanged()
     }
 }

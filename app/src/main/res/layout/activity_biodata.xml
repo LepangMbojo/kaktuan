@@ -3,44 +3,104 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FCF9F9"
-    tools:context=".ui.profile.ProfileSetupActivity">
+    android:background="#F8FAFA"> <View
+    android:id="@+id/headerBg"
+    android:layout_width="match_parent"
+    android:layout_height="160dp"
+    android:background="#245F58"
+    app:layout_constraintTop_toTopOf="parent" />
 
-    <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:fillViewport="true"
-        app:layout_constraintBottom_toBottomOf="parent"
+    <ImageView
+        android:id="@+id/btnBack"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="32dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:padding="8dp"
+        android:src="@android:drawable/ic_menu_revert"
+        app:tint="#FFFFFF"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Biodata Diri"
+        android:textColor="#FFFFFF"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        app:layout_constraintBottom_toBottomOf="@id/btnBack"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toTopOf="@id/btnBack" />
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:fillViewport="true"
+        android:clipToPadding="false"
+        app:layout_constraintTop_toBottomOf="@id/btnBack"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="24dp">
+            android:paddingHorizontal="24dp"
+            android:gravity="center_horizontal">
 
-            <TextView
-                android:layout_width="match_parent"
+            <FrameLayout
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="Lengkapi Biodata"
-                android:textColor="#245F58"
-                android:textSize="28sp"
-                android:textStyle="bold" />
+                android:layout_marginTop="20dp"
+                android:layout_marginBottom="32dp">
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:layout_marginBottom="32dp"
-                android:text="Data ini membantu KakTuan memberikan analisis nutrisi yang lebih akurat untuk Anda."
-                android:textColor="#555555"
-                android:textSize="14sp" />
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardProfileImage"
+                    android:layout_width="120dp"
+                    android:layout_height="120dp"
+                    app:cardCornerRadius="60dp"
+                    app:cardElevation="8dp"
+                    app:strokeWidth="4dp"
+                    app:strokeColor="#FFFFFF"
+                    app:cardBackgroundColor="#E2E8F0">
+
+                    <ImageView
+                        android:id="@+id/ivProfileSetup"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/user"
+                        app:tint="#94A3B8" />
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/btnChangePhoto"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:layout_gravity="bottom|end"
+                    android:layout_marginEnd="4dp"
+                    android:layout_marginBottom="4dp"
+                    app:cardCornerRadius="18dp"
+                    app:cardBackgroundColor="#38C6A5"
+                    app:strokeWidth="2dp"
+                    app:strokeColor="#FFFFFF"
+                    app:cardElevation="10dp"
+                    android:clickable="true"
+                    android:focusable="true">
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_gravity="center"
+                        android:src="@android:drawable/ic_menu_camera"
+                        app:tint="#FFFFFF"/>
+                </com.google.android.material.card.MaterialCardView>
+            </FrameLayout>
 
             <com.google.android.material.textfield.TextInputLayout
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
@@ -50,13 +110,16 @@
                 app:boxCornerRadiusBottomEnd="16dp"
                 app:boxCornerRadiusBottomStart="16dp"
                 app:boxCornerRadiusTopEnd="16dp"
-                app:boxCornerRadiusTopStart="16dp">
+                app:boxCornerRadiusTopStart="16dp"
+                app:boxStrokeColor="#38C6A5"
+                app:boxBackgroundColor="#FFFFFF">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etNama"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="Nama Lengkap"
+                    android:textColor="#1E293B"
                     android:inputType="textPersonName" />
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -68,13 +131,16 @@
                 app:boxCornerRadiusBottomEnd="16dp"
                 app:boxCornerRadiusBottomStart="16dp"
                 app:boxCornerRadiusTopEnd="16dp"
-                app:boxCornerRadiusTopStart="16dp">
+                app:boxCornerRadiusTopStart="16dp"
+                app:boxStrokeColor="#38C6A5"
+                app:boxBackgroundColor="#FFFFFF">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etUmur"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="Umur (Tahun)"
+                    android:textColor="#1E293B"
                     android:inputType="number" />
             </com.google.android.material.textfield.TextInputLayout>
 
@@ -94,13 +160,16 @@
                     app:boxCornerRadiusBottomEnd="16dp"
                     app:boxCornerRadiusBottomStart="16dp"
                     app:boxCornerRadiusTopEnd="16dp"
-                    app:boxCornerRadiusTopStart="16dp">
+                    app:boxCornerRadiusTopStart="16dp"
+                    app:boxStrokeColor="#38C6A5"
+                    app:boxBackgroundColor="#FFFFFF">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etTinggi"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:hint="Tinggi (cm)"
+                        android:textColor="#1E293B"
                         android:inputType="numberDecimal" />
                 </com.google.android.material.textfield.TextInputLayout>
 
@@ -113,24 +182,28 @@
                     app:boxCornerRadiusBottomEnd="16dp"
                     app:boxCornerRadiusBottomStart="16dp"
                     app:boxCornerRadiusTopEnd="16dp"
-                    app:boxCornerRadiusTopStart="16dp">
+                    app:boxCornerRadiusTopStart="16dp"
+                    app:boxStrokeColor="#38C6A5"
+                    app:boxBackgroundColor="#FFFFFF">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etBerat"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:hint="Berat (kg)"
+                        android:textColor="#1E293B"
                         android:inputType="numberDecimal" />
                 </com.google.android.material.textfield.TextInputLayout>
             </LinearLayout>
 
             <TextView
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
                 android:text="Jenis Kelamin"
-                android:textColor="#555555"
-                android:textSize="14sp" />
+                android:textColor="#64748B"
+                android:textSize="14sp"
+                android:textStyle="bold" />
 
             <RadioGroup
                 android:id="@+id/rgJenisKelamin"
@@ -144,14 +217,16 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginEnd="24dp"
-                    android:buttonTint="#245F58"
+                    android:buttonTint="#38C6A5"
+                    android:textColor="#1E293B"
                     android:text="Laki-laki" />
 
                 <RadioButton
                     android:id="@+id/rbPerempuan"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:buttonTint="#245F58"
+                    android:buttonTint="#38C6A5"
+                    android:textColor="#1E293B"
                     android:text="Perempuan" />
             </RadioGroup>
 
@@ -163,14 +238,17 @@
                 app:boxCornerRadiusBottomEnd="16dp"
                 app:boxCornerRadiusBottomStart="16dp"
                 app:boxCornerRadiusTopEnd="16dp"
-                app:boxCornerRadiusTopStart="16dp">
+                app:boxCornerRadiusTopStart="16dp"
+                app:boxStrokeColor="#38C6A5"
+                app:boxBackgroundColor="#FFFFFF">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etPenyakit"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:gravity="top|start"
-                    android:hint="Kondisi Medis (Contoh: Diabetes, Hipertensi)"
+                    android:hint="Kondisi Medis (Opsional, pisahkan dengan koma)"
+                    android:textColor="#1E293B"
                     android:inputType="textMultiLine"
                     android:lines="3"
                     android:minLines="3" />
@@ -179,14 +257,16 @@
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnSimpan"
                 android:layout_width="match_parent"
-                android:layout_height="55dp"
-                android:layout_marginBottom="24dp"
-                android:backgroundTint="#245F58"
+                android:layout_height="56dp"
+                android:layout_marginBottom="40dp"
+                android:backgroundTint="#38C6A5"
                 android:text="Simpan Profil"
                 android:textAllCaps="false"
                 android:textSize="16sp"
-                app:cornerRadius="24dp" />
+                android:textStyle="bold"
+                app:cornerRadius="16dp"
+                app:elevation="4dp" />
 
         </LinearLayout>
-    </ScrollView>
+    </androidx.core.widget.NestedScrollView>
 </androidx.constraintlayout.widget.ConstraintLayout>

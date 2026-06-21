@@ -3,31 +3,28 @@ package com.example.kaktuan
 import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
+import com.example.kaktuan.supabase.SupabaseClient
 import com.example.kaktuan.ui.auth.LoginActivity
 import com.example.kaktuan.ui.home.HomeActivity
-import com.google.firebase.auth.FirebaseAuth
+import io.github.jan.supabase.gotrue.auth
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val currentUser = FirebaseAuth.getInstance().currentUser
+        lifecycleScope.launch {
+            val currentSession = SupabaseClient.client.auth.currentSessionOrNull()
 
-        if (currentUser != null) {
+            if (currentSession != null) {
+                startActivity(Intent(this@MainActivity, HomeActivity::class.java))
+            } else {
+                startActivity(Intent(this@MainActivity, LoginActivity::class.java))
+            }
 
-            startActivity(
-                Intent(this, HomeActivity::class.java)
-            )
-
-        } else {
-
-            startActivity(
-                Intent(this, LoginActivity::class.java)
-            )
-
+            finish()
         }
-
-        finish()
     }
 }

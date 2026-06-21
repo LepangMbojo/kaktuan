@@ -7,7 +7,9 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.animation.DecelerateInterpolator
 import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
@@ -19,11 +21,10 @@ import com.example.kaktuan.api.GeminiResponse
 import com.example.kaktuan.api.GeminiRetrofitClient
 import com.example.kaktuan.api.Part
 import com.example.kaktuan.databinding.FragmentHomeBinding
-import com.example.kaktuan.firebase.firestore.FirestoreHelper
+import com.example.kaktuan.supabase.SupabaseClient
+import com.example.kaktuan.supabase.SupabaseDatabaseHelper
 import com.google.android.material.bottomnavigation.BottomNavigationView
-import com.google.android.material.progressindicator.CircularProgressIndicator
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
+import io.github.jan.supabase.gotrue.auth
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -33,8 +34,7 @@ class HomeFragment : Fragment() {
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
 
-    private lateinit var auth: FirebaseAuth
-    private lateinit var firestoreHelper: FirestoreHelper
+    private lateinit var databaseHelper: SupabaseDatabaseHelper
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -47,59 +47,162 @@ class HomeFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        auth = FirebaseAuth.getInstance()
-        firestoreHelper = FirestoreHelper()
+        databaseHelper = SupabaseDatabaseHelper()
 
-        binding.cardScanShortcut.setOnClickListener {
-            activity?.findViewById<BottomNavigationView>(R.id.bottomNavigation)?.selectedItemId = R.id.nav_scan
-        }
-
-        binding.tvLihatSemua.setOnClickListener {
-            activity?.findViewById<BottomNavigationView>(R.id.bottomNavigation)?.selectedItemId = R.id.nav_history
-        }
-
+        setupAnimations()
+        setupClickListeners()
         muatDataUser()
     }
 
-    private fun muatDataUser() {
-        val uid = auth.currentUser?.uid
-        if (uid != null) {
-            muatStatistikRiwayat(uid)
+    private fun setupAnimations() {
+        val viewsToAnimate = listOf(
+            binding.cardSearch,
+            binding.cardDashboard,
+            binding.labelMenu,
+            binding.scrollMenu,
+            binding.labelTips,
+            binding.cardTipsBanner
+        )
 
-            firestoreHelper.getUserProfile(uid) { user ->
-                if (_binding == null) return@getUserProfile
-                if (user != null) {
-                    val namaPanggilan = user.name.split(" ").firstOrNull() ?: user.name
-                    binding.tvNamaUser.text = namaPanggilan
+        viewsToAnimate.forEachIndexed { index, view ->
+            view.alpha = 0f
+            view.translationY = 50f
+            view.animate()
+                .alpha(1f)
+                .translationY(0f)
+                .setDuration(600)
+                .setStartDelay(100L * index)
+                .setInterpolator(DecelerateInterpolator())
+                .start()
+        }
+    }
 
-                    val fotoUrl = user.profilePictureUrl
-                    if (!fotoUrl.isNullOrEmpty()) {
-                        Glide.with(this)
-                            .load(fotoUrl)
-                            .circleCrop()
-                            .placeholder(R.drawable.user)
-                            .error(R.drawable.user)
-                            .into(binding.ivProfileHome)
-                    } else {
-                        binding.ivProfileHome.setImageResource(R.drawable.user)
-                    }
+    private fun setupClickListeners() {
+        binding.menuRiwayat.setOnClickListener {
+            activity?.findViewById<BottomNavigationView>(R.id.bottomNavigation)?.selectedItemId = R.id.nav_history
+        }
 
-                    val infoFisik = "Gender: ${user.gender}, Umur: ${user.age}, Berat: ${user.weight}kg, Tinggi: ${user.height}cm."
-                    val penyakit = if (user.healthConditions.isNotEmpty()) {
-                        "Riwayat penyakit: ${user.healthConditions.joinToString(", ")}."
-                    } else {
-                        "Kondisi sehat."
-                    }
+        binding.menuStatistik.setOnClickListener {
+            Toast.makeText(requireContext(), "Fitur Statistik Segera Hadir!", Toast.LENGTH_SHORT).show()
+        }
 
-                    val promptSaran = """
-                        Bertindaklah sebagai ahli kesehatan dan gizi profesional.
-                        Profil pasien: $infoFisik $penyakit
-                        Berikan 1 tip harian saja yang sangat singkat (maksimal 2 kalimat), spesifik, dan memotivasi untuk pasien ini terkait makanan atau aktivitas fisik. Dilarang menggunakan format markdown.
-                    """.trimIndent()
-
-                    tarikSaranGemini(promptSaran)
+        binding.menuRekomendasi.setOnClickListener {
+            if (binding.rvSaranAI.visibility == View.VISIBLE) {
+                binding.rvSaranAI.visibility = View.GONE
+            } else {
+                binding.rvSaranAI.visibility = View.VISIBLE
+                binding.scrollView.post {
+                    binding.scrollView.smoothScrollTo(0, binding.rvSaranAI.bottom)
                 }
             }
+        }
+
+        binding.filterHariIni.setOnClickListener { ubahFilterAktif(binding.filterHariIni) }
+        binding.filterMinggu.setOnClickListener { ubahFilterAktif(binding.filterMinggu) }
+        binding.filterSemua.setOnClickListener { ubahFilterAktif(binding.filterSemua) }
+    }
+
+    private fun ubahFilterAktif(viewAktif: TextView) {
+        val daftarFilter = listOf(binding.filterHariIni, binding.filterMinggu, binding.filterSemua)
+
+        daftarFilter.forEach { tv ->
+            if (tv == viewAktif) {
+                tv.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#38C6A5"))
+                tv.setTextColor(Color.WHITE)
+            } else {
+                tv.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#334155"))
+                tv.setTextColor(Color.parseColor("#94A3B8"))
+            }
+        }
+    }
+
+    private fun muatDataUser() {
+        val session = SupabaseClient.client.auth.currentSessionOrNull()
+        val uid = session?.user?.id ?: return
+
+        muatStatistikKeamanan(uid)
+
+        databaseHelper.getUserProfile(uid) { user ->
+            if (_binding == null || user == null) return@getUserProfile
+
+            val namaPanggilan = user.name.split(" ").firstOrNull() ?: user.name
+            binding.tvNamaUser.text = namaPanggilan
+
+            var fotoUrl = user.profilePictureUrl
+
+            if (fotoUrl.isNullOrEmpty() || fotoUrl == "null") {
+                val metadata = session.user?.userMetadata
+                fotoUrl = metadata?.get("avatar_url")?.toString()?.replace("\"", "")
+                    ?: metadata?.get("picture")?.toString()?.replace("\"", "")
+            }
+
+            // BLOK YANG SUDAH BERSIH
+            if (!fotoUrl.isNullOrEmpty() && fotoUrl != "null") {
+                binding.ivProfileHome.imageTintList = null
+
+                Glide.with(this@HomeFragment) // Menggunakan referensi fragment yang eksplisit
+                    .load(fotoUrl)
+                    .circleCrop()
+                    .placeholder(R.drawable.user)
+                    .error(R.drawable.user)
+                    .into(binding.ivProfileHome)
+            } else {
+                binding.ivProfileHome.setImageResource(R.drawable.user)
+            }
+
+            val infoFisik = "Gender: ${user.gender}, Umur: ${user.age}, Berat: ${user.weight}kg, Tinggi: ${user.height}cm."
+            val penyakit = if (user.healthConditions.isNotEmpty()) {
+                "Riwayat penyakit: ${user.healthConditions.joinToString(", ")}."
+            } else {
+                "Kondisi sehat."
+            }
+            val promptSaran = """
+                Bertindaklah sebagai ahli kesehatan dan gizi profesional.
+                Profil pasien: $infoFisik $penyakit
+                Berikan 1 tip harian saja yang sangat singkat (maksimal 2 kalimat), spesifik, dan memotivasi untuk pasien ini terkait makanan atau aktivitas fisik. Dilarang menggunakan format markdown.
+            """.trimIndent()
+
+            tarikSaranGemini(promptSaran)
+        }
+    }
+
+    private fun muatStatistikKeamanan(uid: String) {
+        databaseHelper.getScanHistory(uid) { listHistory ->
+            if (_binding == null) return@getScanHistory
+
+            if (listHistory != null && listHistory.isNotEmpty()) {
+                val totalScan = listHistory.size
+                var countAman = 0
+
+                for (history in listHistory) {
+                    if ((history.healthScore ?: 0) >= 70) {
+                        countAman++
+                    }
+                }
+
+                updateDiagramLingkaran(countAman, totalScan)
+            } else {
+                updateDiagramLingkaran(0, 0)
+            }
+        }
+    }
+
+    private fun updateDiagramLingkaran(countAman: Int, totalScan: Int) {
+        if (totalScan > 0) {
+            val healthScore = ((countAman.toDouble() / totalScan) * 100).toInt()
+
+            binding.progressKeamanan.setProgressCompat(healthScore, true)
+            binding.tvPersentase.text = "$healthScore%"
+
+            when {
+                healthScore >= 70 -> binding.progressKeamanan.setIndicatorColor(Color.parseColor("#38C6A5"))
+                healthScore >= 40 -> binding.progressKeamanan.setIndicatorColor(Color.parseColor("#F39C12"))
+                else -> binding.progressKeamanan.setIndicatorColor(Color.parseColor("#E74C3C"))
+            }
+        } else {
+            binding.progressKeamanan.progress = 0
+            binding.tvPersentase.text = "0%"
+            binding.progressKeamanan.setIndicatorColor(Color.parseColor("#334155"))
         }
     }
 
@@ -122,111 +225,6 @@ class HomeFragment : Fragment() {
                     }
                 }
             })
-    }
-
-    private fun muatStatistikRiwayat(uid: String) {
-        val db = FirebaseFirestore.getInstance()
-
-        db.collection("users").document(uid).collection("history")
-            .get()
-            .addOnSuccessListener { documents ->
-                if (_binding == null) return@addOnSuccessListener
-
-                val totalScan = documents.size()
-                var countAman = 0
-                val listRiwayat = mutableListOf<RiwayatItem>()
-
-                // Algoritma untuk mencari makanan paling sering dikonsumsi
-                val frequencyMap = HashMap<String, Int>()
-
-                for (document in documents) {
-                    val analisisKesehatan = document.get("analisis_kesehatan") as? Map<*, *>
-                    val analysis = analisisKesehatan?.get("analysis") as? Map<*, *>
-                    val isSafe = analysis?.get("is_safe") as? Boolean ?: true
-
-                    val productName = document.getString("product_name") ?: "Produk Ter-scan"
-
-                    // Hitung kemunculan setiap makanan
-                    frequencyMap[productName] = frequencyMap.getOrDefault(productName, 0) + 1
-
-                    if (isSafe) countAman++
-
-                    if (listRiwayat.size < 5) {
-                        listRiwayat.add(RiwayatItem(productName, isSafe))
-                    }
-                }
-
-                // Cari makanan dengan nilai frekuensi tertinggi
-                val mostConsumed = if (frequencyMap.isNotEmpty()) {
-                    frequencyMap.maxByOrNull { it.value }?.key
-                } else {
-                    "Belum ada data"
-                }
-
-                // Tampilkan makanan paling sering dikonsumsi ke UI
-                binding.tvMostConsumed.text = mostConsumed
-
-                updateIndikatorGizi(countAman, totalScan)
-                binding.rvTerakhirDipindai.adapter = RiwayatAdapter(listRiwayat)
-            }
-            .addOnFailureListener { e ->
-                Log.e("HomeFragment", "Gagal memuat statistik database", e)
-            }
-    }
-
-    private fun updateIndikatorGizi(countAman: Int, totalScan: Int) {
-        val cardIndikator = binding.layoutIndikator.getChildAt(0) ?: return
-        val progressRing = cardIndikator.findViewById<CircularProgressIndicator>(R.id.progressRing)
-        val tvRingLabel = cardIndikator.findViewById<TextView>(R.id.tvRingLabel)
-        val tvRingTitle = cardIndikator.findViewById<TextView>(R.id.tvRingTitle)
-
-        tvRingTitle.text = "Skor Aman"
-
-        if (totalScan > 0) {
-            val healthScore = ((countAman.toDouble() / totalScan) * 100).toInt()
-            progressRing.progress = healthScore
-            tvRingLabel.text = "$healthScore%"
-
-            when {
-                healthScore >= 70 -> progressRing.setIndicatorColor(Color.parseColor("#38C6A5"))
-                healthScore >= 40 -> progressRing.setIndicatorColor(Color.parseColor("#F39C12"))
-                else -> progressRing.setIndicatorColor(Color.parseColor("#E74C3C"))
-            }
-        } else {
-            progressRing.progress = 0
-            tvRingLabel.text = "0%"
-            progressRing.setIndicatorColor(Color.parseColor("#BDC3C7"))
-        }
-
-        binding.layoutIndikator.getChildAt(1)?.visibility = View.INVISIBLE
-        binding.layoutIndikator.getChildAt(2)?.visibility = View.INVISIBLE
-    }
-
-    data class RiwayatItem(val nama: String, val isSafe: Boolean)
-
-    inner class RiwayatAdapter(private val list: List<RiwayatItem>) : RecyclerView.Adapter<RiwayatAdapter.ViewHolder>() {
-        inner class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-            val tvName: TextView = view.findViewById(R.id.tvProductName)
-            val tvStatus: TextView = view.findViewById(R.id.tvProductStatus)
-        }
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-            val view = LayoutInflater.from(parent.context).inflate(R.layout.item_riwayat_scan, parent, false)
-            return ViewHolder(view)
-        }
-        override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-            val item = list[position]
-            holder.tvName.text = item.nama
-            if (item.isSafe) {
-                holder.tvStatus.text = "Aman"
-                holder.tvStatus.setTextColor(Color.parseColor("#245F58"))
-                holder.tvStatus.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#D1E8E5"))
-            } else {
-                holder.tvStatus.text = "Bahaya"
-                holder.tvStatus.setTextColor(Color.parseColor("#E74C3C"))
-                holder.tvStatus.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#FADBD8"))
-            }
-        }
-        override fun getItemCount() = list.size
     }
 
     inner class AiAdapter(private val tip: String) : RecyclerView.Adapter<AiAdapter.ViewHolder>() {
