@@ -268,132 +268,228 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/cardDashboard" />
 
-        <HorizontalScrollView
-            android:id="@+id/scrollMenu"
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardBarChart"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_marginHorizontal="24dp"
             android:layout_marginTop="16dp"
-            android:clipToPadding="false"
-            android:paddingHorizontal="20dp"
-            android:scrollbars="none"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="4dp"
+            app:cardBackgroundColor="#FFFFFF"
+            app:strokeWidth="1dp"
+            app:strokeColor="#E2E8F0"
             app:layout_constraintTop_toBottomOf="@id/labelMenu">
 
             <LinearLayout
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal">
+                android:orientation="vertical"
+                android:padding="20dp">
 
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/menuRiwayat"
-                    android:layout_width="140dp"
-                    android:layout_height="150dp"
-                    android:layout_marginEnd="16dp"
-                    android:layout_marginVertical="8dp"
-                    app:cardCornerRadius="20dp"
-                    app:cardElevation="4dp"
-                    app:cardBackgroundColor="#FFFFFF"
-                    app:strokeWidth="1dp"
-                    app:strokeColor="#E2E8F0">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Statistik Konsumsi"
+                    android:textColor="#1E293B"
+                    android:textStyle="bold"
+                    android:textSize="16sp"
+                    android:layout_marginBottom="16dp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="180dp"
+                    android:orientation="horizontal"
+                    android:gravity="bottom"
+                    android:baselineAligned="false">
+
                     <LinearLayout
-                        android:layout_width="match_parent"
+                        android:layout_width="0dp"
                         android:layout_height="match_parent"
+                        android:layout_weight="1"
                         android:orientation="vertical"
-                        android:padding="16dp"
-                        android:gravity="center_vertical">
-                        <ImageView
-                            android:layout_width="40dp"
-                            android:layout_height="40dp"
-                            android:background="@drawable/bg_header_curved"
-                            android:backgroundTint="#E0F2F1"
-                            android:padding="10dp"
-                            android:src="@android:drawable/ic_menu_agenda"
-                            app:tint="#245F58"/>
+                        android:gravity="bottom|center_horizontal">
+
                         <TextView
+                            android:id="@+id/tvSkorSenin"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="16dp"
-                            android:text="Riwayat\nMakanan"
-                            android:textColor="#1E293B"
-                            android:textStyle="bold"
-                            android:textSize="15sp"/>
-                    </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
+                            android:text="0"
+                            android:textSize="10sp"
+                            android:textColor="#94A3B8"
+                            android:layout_marginBottom="4dp"/>
 
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/menuStatistik"
-                    android:layout_width="140dp"
-                    android:layout_height="150dp"
-                    android:layout_marginEnd="16dp"
-                    android:layout_marginVertical="8dp"
-                    app:cardCornerRadius="20dp"
-                    app:cardElevation="4dp"
-                    app:cardBackgroundColor="#FFFFFF"
-                    app:strokeWidth="1dp"
-                    app:strokeColor="#E2E8F0">
+                        <View
+                            android:id="@+id/barSenin"
+                            android:layout_width="24dp"
+                            android:layout_height="0dp"
+                            android:background="@drawable/bg_bar_chart"
+                            android:backgroundTint="#38C6A5"/>
+                    </LinearLayout>
+
                     <LinearLayout
-                        android:layout_width="match_parent"
+                        android:layout_width="0dp"
                         android:layout_height="match_parent"
+                        android:layout_weight="1"
                         android:orientation="vertical"
-                        android:padding="16dp"
-                        android:gravity="center_vertical">
-                        <ImageView
-                            android:layout_width="40dp"
-                            android:layout_height="40dp"
-                            android:background="@drawable/bg_header_curved"
-                            android:backgroundTint="#FEF3C7"
-                            android:padding="10dp"
-                            android:src="@android:drawable/ic_menu_sort_by_size"
-                            app:tint="#D97706"/>
+                        android:gravity="bottom|center_horizontal">
+
                         <TextView
+                            android:id="@+id/tvSkorSelasa"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="16dp"
-                            android:text="Statistik\nMingguan"
-                            android:textColor="#1E293B"
-                            android:textStyle="bold"
-                            android:textSize="15sp"/>
-                    </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
+                            android:text="0"
+                            android:textSize="10sp"
+                            android:textColor="#94A3B8"
+                            android:layout_marginBottom="4dp"/>
 
-                <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/menuRekomendasi"
-                    android:layout_width="140dp"
-                    android:layout_height="150dp"
-                    android:layout_marginEnd="4dp"
-                    android:layout_marginVertical="8dp"
-                    app:cardCornerRadius="20dp"
-                    app:cardElevation="4dp"
-                    app:cardBackgroundColor="#FFFFFF"
-                    app:strokeWidth="1dp"
-                    app:strokeColor="#E2E8F0">
+                        <View
+                            android:id="@+id/barSelasa"
+                            android:layout_width="24dp"
+                            android:layout_height="0dp"
+                            android:background="@drawable/bg_bar_chart"
+                            android:backgroundTint="#38C6A5"/>
+                    </LinearLayout>
+
                     <LinearLayout
-                        android:layout_width="match_parent"
+                        android:layout_width="0dp"
                         android:layout_height="match_parent"
+                        android:layout_weight="1"
                         android:orientation="vertical"
-                        android:padding="16dp"
-                        android:gravity="center_vertical">
-                        <ImageView
-                            android:layout_width="40dp"
-                            android:layout_height="40dp"
-                            android:background="@drawable/bg_header_curved"
-                            android:backgroundTint="#FCE7F3"
-                            android:padding="10dp"
-                            android:src="@android:drawable/btn_star"
-                            app:tint="#DB2777"/>
+                        android:gravity="bottom|center_horizontal">
+
                         <TextView
+                            android:id="@+id/tvSkorRabu"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="16dp"
-                            android:text="Rekomendasi\nAI &amp; Tips"
-                            android:textColor="#1E293B"
-                            android:textStyle="bold"
-                            android:textSize="15sp"/>
+                            android:text="0"
+                            android:textSize="10sp"
+                            android:textColor="#94A3B8"
+                            android:layout_marginBottom="4dp"/>
+
+                        <View
+                            android:id="@+id/barRabu"
+                            android:layout_width="24dp"
+                            android:layout_height="0dp"
+                            android:background="@drawable/bg_bar_chart"
+                            android:backgroundTint="#38C6A5"/>
                     </LinearLayout>
-                </com.google.android.material.card.MaterialCardView>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:gravity="bottom|center_horizontal">
+
+                        <TextView
+                            android:id="@+id/tvSkorKamis"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0"
+                            android:textSize="10sp"
+                            android:textColor="#94A3B8"
+                            android:layout_marginBottom="4dp"/>
+
+                        <View
+                            android:id="@+id/barKamis"
+                            android:layout_width="24dp"
+                            android:layout_height="0dp"
+                            android:background="@drawable/bg_bar_chart"
+                            android:backgroundTint="#38C6A5"/>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:gravity="bottom|center_horizontal">
+
+                        <TextView
+                            android:id="@+id/tvSkorJumat"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0"
+                            android:textSize="10sp"
+                            android:textColor="#94A3B8"
+                            android:layout_marginBottom="4dp"/>
+
+                        <View
+                            android:id="@+id/barJumat"
+                            android:layout_width="24dp"
+                            android:layout_height="0dp"
+                            android:background="@drawable/bg_bar_chart"
+                            android:backgroundTint="#38C6A5"/>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:gravity="bottom|center_horizontal">
+
+                        <TextView
+                            android:id="@+id/tvSkorSabtu"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0"
+                            android:textSize="10sp"
+                            android:textColor="#94A3B8"
+                            android:layout_marginBottom="4dp"/>
+
+                        <View
+                            android:id="@+id/barSabtu"
+                            android:layout_width="24dp"
+                            android:layout_height="0dp"
+                            android:background="@drawable/bg_bar_chart"
+                            android:backgroundTint="#38C6A5"/>
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:gravity="bottom|center_horizontal">
+
+                        <TextView
+                            android:id="@+id/tvSkorMinggu"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0"
+                            android:textSize="10sp"
+                            android:textColor="#94A3B8"
+                            android:layout_marginBottom="4dp"/>
+
+                        <View
+                            android:id="@+id/barMinggu"
+                            android:layout_width="24dp"
+                            android:layout_height="0dp"
+                            android:background="@drawable/bg_bar_chart"
+                            android:backgroundTint="#38C6A5"/>
+                    </LinearLayout>
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="8dp">
+
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Sen" android:gravity="center" android:textSize="12sp" android:textColor="#64748B" android:textStyle="bold"/>
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Sel" android:gravity="center" android:textSize="12sp" android:textColor="#64748B" android:textStyle="bold"/>
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Rab" android:gravity="center" android:textSize="12sp" android:textColor="#64748B" android:textStyle="bold"/>
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Kam" android:gravity="center" android:textSize="12sp" android:textColor="#64748B" android:textStyle="bold"/>
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Jum" android:gravity="center" android:textSize="12sp" android:textColor="#64748B" android:textStyle="bold"/>
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Sab" android:gravity="center" android:textSize="12sp" android:textColor="#64748B" android:textStyle="bold"/>
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Min" android:gravity="center" android:textSize="12sp" android:textColor="#64748B" android:textStyle="bold"/>
+                </LinearLayout>
 
             </LinearLayout>
-        </HorizontalScrollView>
-
+        </com.google.android.material.card.MaterialCardView>
         <TextView
             android:id="@+id/labelTips"
             android:layout_width="wrap_content"
@@ -405,7 +501,7 @@
             android:textSize="18sp"
             android:textStyle="bold"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/scrollMenu" />
+            app:layout_constraintTop_toBottomOf="@id/cardBarChart" />
 
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/cardTipsBanner"
