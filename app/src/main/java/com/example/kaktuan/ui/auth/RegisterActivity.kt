@@ -2,7 +2,7 @@ package com.example.kaktuan.ui.auth
 
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.kaktuan.databinding.ActivityRegisterBinding
@@ -27,11 +27,11 @@ class RegisterActivity : AppCompatActivity() {
             val confirmPassword = binding.etConfirmPassword.text.toString().trim()
 
             if (email.isEmpty() || password.isEmpty() || confirmPassword.isEmpty()) {
-                Toast.makeText(this, "Semua field wajib diisi", Toast.LENGTH_SHORT).show()
+                showPopup("Perhatian", "Semua kolom formulir wajib diisi!", false)
             } else if (password.length < 6) {
-                Toast.makeText(this, "Password minimal 6 karakter", Toast.LENGTH_SHORT).show()
+                showPopup("Perhatian", "Password harus terdiri dari minimal 6 karakter.", false)
             } else if (password != confirmPassword) {
-                Toast.makeText(this, "Password tidak cocok", Toast.LENGTH_SHORT).show()
+                showPopup("Perhatian", "Konfirmasi password tidak cocok dengan password yang Anda masukkan.", false)
             } else {
                 registerUser(email, password)
             }
@@ -43,21 +43,44 @@ class RegisterActivity : AppCompatActivity() {
     }
 
     private fun registerUser(email: String, password: String) {
-        binding.btnRegister.isEnabled = false
-        binding.btnRegister.text = "Loading..."
+        setLoadingState(true)
 
         lifecycleScope.launch {
             val result = authHelper.registerWithEmail(email, password)
 
             result.onSuccess {
-                Toast.makeText(this@RegisterActivity, "Register berhasil, silakan login", Toast.LENGTH_SHORT).show()
-                startActivity(Intent(this@RegisterActivity, LoginActivity::class.java))
-                finish()
+                setLoadingState(false)
+                showPopup("Registrasi Berhasil", "Akun Anda berhasil dibuat! Silakan login untuk melanjutkan.", true) {
+                    startActivity(Intent(this@RegisterActivity, LoginActivity::class.java))
+                    finish()
+                }
             }.onFailure { exception ->
-                binding.btnRegister.isEnabled = true
-                binding.btnRegister.text = "Register"
-                Toast.makeText(this@RegisterActivity, "Register gagal: ${exception.message}", Toast.LENGTH_LONG).show()
+                setLoadingState(false)
+                showPopup("Registrasi Gagal", exception.message ?: "Terjadi kesalahan tidak diketahui.", false)
             }
         }
+    }
+
+    private fun setLoadingState(isLoading: Boolean) {
+        binding.btnRegister.isEnabled = !isLoading
+        binding.btnRegister.text = if (isLoading) "Memproses..." else "Register"
+    }
+
+    // Fungsi Utama untuk memunculkan Pop-up Informasi
+    private fun showPopup(title: String, message: String, isSuccess: Boolean, onOkClicked: (() -> Unit)? = null) {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle(title)
+        builder.setMessage(message)
+        builder.setCancelable(false)
+
+        // Pilih ikon berdasarkan status
+        val icon = if (isSuccess) android.R.drawable.ic_dialog_info else android.R.drawable.ic_dialog_alert
+        builder.setIcon(icon)
+
+        builder.setPositiveButton("Mengerti") { dialog, _ ->
+            dialog.dismiss()
+            onOkClicked?.invoke() // Navigasi ke halaman login jika sukses
+        }
+        builder.show()
     }
 }

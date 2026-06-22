@@ -5,10 +5,10 @@ import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.kaktuan.BuildConfig
-import com.example.kaktuan.R
 import com.example.kaktuan.databinding.ActivityLoginBinding
 import com.example.kaktuan.supabase.SupabaseAuthHelper
 import com.example.kaktuan.ui.home.HomeActivity
@@ -25,9 +25,6 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var googleSignInClient: GoogleSignInClient
     private lateinit var authHelper: SupabaseAuthHelper
 
-    // =========================
-    // LAUNCHER GOOGLE SIGN-IN
-    // =========================
     private val googleSignInLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
@@ -37,9 +34,9 @@ class LoginActivity : AppCompatActivity() {
                 val account = task.getResult(ApiException::class.java)
                 account.idToken?.let { token ->
                     supabaseGoogleLogin(token)
-                } ?: Toast.makeText(this, "Token Google Kosong", Toast.LENGTH_SHORT).show()
+                } ?: showPopup("Peringatan", "Token Google Kosong", false)
             } catch (e: ApiException) {
-                Toast.makeText(this, "Google Sign In gagal", Toast.LENGTH_SHORT).show()
+                showPopup("Gagal", "Google Sign In batal atau gagal.", false)
             }
         }
     }
@@ -49,12 +46,8 @@ class LoginActivity : AppCompatActivity() {
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Inisialisasi Helper Supabase
         authHelper = SupabaseAuthHelper()
 
-        // =========================
-        // GOOGLE SIGN IN CONFIG
-        // =========================
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestIdToken(BuildConfig.GOOGLE_WEB_CLIENT_ID)
             .requestEmail()
@@ -62,71 +55,67 @@ class LoginActivity : AppCompatActivity() {
 
         googleSignInClient = GoogleSignIn.getClient(this, gso)
 
-        // =========================
-        // KLIK TOMBOL LOGIN EMAIL
-        // =========================
         binding.btnLogin.setOnClickListener {
             val email = binding.etEmail.text.toString().trim()
             val password = binding.etPassword.text.toString().trim()
 
             if (email.isEmpty() || password.isEmpty()) {
-                Toast.makeText(this, "Email dan Password wajib diisi", Toast.LENGTH_SHORT).show()
+                showPopup("Perhatian", "Email dan Password wajib diisi!", false)
             } else {
                 loginUser(email, password)
             }
         }
 
-        // =========================
-        // KLIK TOMBOL GOOGLE
-        // =========================
         binding.btnGoogleLogin.setOnClickListener {
-            val signInIntent = googleSignInClient.signInIntent
-            googleSignInLauncher.launch(signInIntent)
+            googleSignInClient.signOut().addOnCompleteListener {
+                val signInIntent = googleSignInClient.signInIntent
+                googleSignInLauncher.launch(signInIntent)
+            }
         }
 
-        // =========================
-        // KLIK TOMBOL REGISTER
-        // =========================
         binding.tvRegister.setOnClickListener {
             startActivity(Intent(this, RegisterActivity::class.java))
         }
     }
 
     private fun loginUser(email: String, password: String) {
-        binding.btnLogin.isEnabled = false
-        binding.btnLogin.text = "Loading..."
+        setLoadingState(true)
 
         lifecycleScope.launch {
             val result = authHelper.loginWithEmail(email, password)
 
             result.onSuccess { uid ->
-                cekProfil(uid)
+                setLoadingState(false)
+                showPopup("Berhasil", "Login sukses! Memuat data Anda...", true) {
+                    cekProfil(uid)
+                }
             }.onFailure { exception ->
-                binding.btnLogin.isEnabled = true
-                binding.btnLogin.text = "Login"
-                Toast.makeText(this@LoginActivity, "Login gagal: ${exception.message}", Toast.LENGTH_LONG).show()
+                setLoadingState(false)
+                showPopup("Login Gagal", exception.message ?: "Terjadi kesalahan", false)
             }
         }
     }
 
     private fun supabaseGoogleLogin(idToken: String) {
+        setLoadingState(true)
         lifecycleScope.launch {
             val result = authHelper.loginWithGoogleIdToken(idToken)
 
             result.onSuccess { uid ->
-                cekProfil(uid)
+                setLoadingState(false)
+                showPopup("Berhasil", "Google Login sukses!", true) {
+                    cekProfil(uid)
+                }
             }.onFailure { exception ->
-                Toast.makeText(this@LoginActivity, "Google Login gagal: ${exception.message}", Toast.LENGTH_LONG).show()
+                setLoadingState(false)
+                showPopup("Login Gagal", exception.message ?: "Terjadi kesalahan", false)
             }
         }
     }
 
     private fun cekProfil(uid: String) {
-        Toast.makeText(this, "Mengecek data profil...", Toast.LENGTH_SHORT).show()
-
         lifecycleScope.launch {
             val isExists = authHelper.checkProfileExists(uid)
-
             if (isExists) {
                 startActivity(Intent(this@LoginActivity, HomeActivity::class.java))
             } else {
@@ -134,5 +123,29 @@ class LoginActivity : AppCompatActivity() {
             }
             finish()
         }
+    }
+
+    private fun setLoadingState(isLoading: Boolean) {
+        binding.btnLogin.isEnabled = !isLoading
+        binding.btnGoogleLogin.isEnabled = !isLoading
+        binding.btnLogin.text = if (isLoading) "Loading..." else "Login"
+    }
+
+    // Fungsi Utama untuk memunculkan Pop-up Informasi
+    private fun showPopup(title: String, message: String, isSuccess: Boolean, onOkClicked: (() -> Unit)? = null) {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle(title)
+        builder.setMessage(message)
+        builder.setCancelable(false) // Tidak bisa ditutup dengan mengetuk layar luar
+
+        // Pilih ikon berdasarkan status
+        val icon = if (isSuccess) android.R.drawable.ic_dialog_info else android.R.drawable.ic_dialog_alert
+        builder.setIcon(icon)
+
+        builder.setPositiveButton("OK") { dialog, _ ->
+            dialog.dismiss()
+            onOkClicked?.invoke() // Jalankan perintah navigasi jika ada
+        }
+        builder.show()
     }
 }
