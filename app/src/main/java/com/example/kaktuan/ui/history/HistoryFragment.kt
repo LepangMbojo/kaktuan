@@ -9,21 +9,13 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
-import android.widget.Toast
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.kaktuan.databinding.FragmentHistoryBinding
 import com.example.kaktuan.model.ScanHistory
 import com.example.kaktuan.supabase.SupabaseClient
 import com.example.kaktuan.supabase.SupabaseDatabaseHelper
 import io.github.jan.supabase.gotrue.auth
-import io.github.jan.supabase.postgrest.postgrest
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
 
 class HistoryFragment : Fragment() {
 
@@ -75,7 +67,7 @@ class HistoryFragment : Fragment() {
         val filters = listOf(binding.filterSemua, binding.filterAman, binding.filterBahaya)
         filters.forEach { tv ->
             if (tv == activeView) {
-                tv.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#38C6A5"))
+                tv.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#1D5A5A"))
                 tv.setTextColor(Color.parseColor("#0F172A"))
             } else {
                 tv.backgroundTintList = ColorStateList.valueOf(Color.parseColor("#E2E8F0"))
@@ -150,6 +142,7 @@ class HistoryFragment : Fragment() {
             binding.layoutEmptyState.visibility = View.GONE
             binding.rvHistory.visibility = View.VISIBLE
 
+            // PERBAIKAN: onEditClick sudah dihapus, cukup kirim onItemClick saja
             val adapter = HistoryAdapter(
                 listHistory = filteredList,
                 onItemClick = { selectedItem ->
@@ -158,71 +151,10 @@ class HistoryFragment : Fragment() {
                         .replace(com.example.kaktuan.R.id.frameContainer, detailFragment)
                         .addToBackStack(null)
                         .commit()
-                },
-                onEditClick = { selectedItem ->
-                    tampilkanDialogEditNama(selectedItem)
                 }
             )
             binding.rvHistory.layoutManager = LinearLayoutManager(requireContext())
             binding.rvHistory.adapter = adapter
-        }
-    }
-
-    private fun tampilkanDialogEditNama(history: ScanHistory) {
-        val context = requireContext()
-        val builder = android.app.AlertDialog.Builder(context)
-        builder.setTitle("Edit Nama Produk")
-
-        val input = android.widget.EditText(context)
-        input.setText(history.productName)
-        input.setSelection(input.text.length)
-
-        val layoutParams = android.widget.FrameLayout.LayoutParams(
-            android.widget.FrameLayout.LayoutParams.MATCH_PARENT,
-            android.widget.FrameLayout.LayoutParams.WRAP_CONTENT
-        )
-        layoutParams.setMargins(50, 20, 50, 0)
-        val container = android.widget.FrameLayout(context)
-        container.addView(input, layoutParams)
-        builder.setView(container)
-
-        builder.setPositiveButton("Simpan") { dialog, _ ->
-            val namaBaru = input.text.toString().trim()
-            if (namaBaru.isNotEmpty() && namaBaru != history.productName) {
-                updateNamaKeSupabase(history.scanId, namaBaru)
-            }
-            dialog.dismiss()
-        }
-        builder.setNegativeButton("Batal") { dialog, _ ->
-            dialog.cancel()
-        }
-
-        builder.show()
-    }
-
-    private fun updateNamaKeSupabase(docId: String, namaBaru: String) {
-        lifecycleScope.launch(Dispatchers.IO) {
-            try {
-                // Membangun payload JSON untuk nama kolom di Supabase
-                val updateData = buildJsonObject {
-                    put("product_name", namaBaru) // Sesuaikan jika nama kolom Anda berbeda
-                }
-
-                // Melakukan update langsung berdasarkan ID tabel history
-                SupabaseClient.client.postgrest["history"].update(updateData) {
-                    filter { eq("id", docId) }
-                }
-
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(requireContext(), "Nama berhasil diubah", Toast.LENGTH_SHORT).show()
-                    // Muat ulang data agar tampilan langsung ter-refresh
-                    muatRiwayat()
-                }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(requireContext(), "Gagal mengubah: ${e.message}", Toast.LENGTH_SHORT).show()
-                }
-            }
         }
     }
 
