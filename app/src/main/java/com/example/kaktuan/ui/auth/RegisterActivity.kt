@@ -50,13 +50,22 @@ class RegisterActivity : AppCompatActivity() {
 
             result.onSuccess {
                 setLoadingState(false)
-                showPopup("Registrasi Berhasil", "Akun Anda berhasil dibuat! Silakan login untuk melanjutkan.", true) {
+                showPopup("Registrasi Berhasil", "Akun berhasil dibuat! Silakan login.", true) {
                     startActivity(Intent(this@RegisterActivity, LoginActivity::class.java))
                     finish()
                 }
             }.onFailure { exception ->
                 setLoadingState(false)
-                showPopup("Registrasi Gagal", exception.message ?: "Terjadi kesalahan tidak diketahui.", false)
+
+                // Logika baru untuk menyederhanakan pesan kesalahan registrasi
+                val errorMessage = when {
+                    exception.message?.contains("already registered") == true ->
+                        "Email ini sudah terdaftar. Silakan gunakan email lain atau login."
+                    exception.message?.contains("weak password") == true ->
+                        "Password terlalu lemah. Gunakan kombinasi yang lebih kuat."
+                    else -> "Registrasi gagal: ${exception.message}"
+                }
+                showPopup("Registrasi Gagal", errorMessage, false)
             }
         }
     }

@@ -4,131 +4,116 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginHorizontal="16dp"
+    android:layout_marginHorizontal="20dp"
     android:layout_marginTop="8dp"
-    android:layout_marginBottom="8dp"
+    android:layout_marginBottom="12dp"
     android:clickable="true"
     android:focusable="true"
     android:foreground="?attr/selectableItemBackground"
     app:cardCornerRadius="20dp"
-    app:cardElevation="3dp"
+    app:cardElevation="2dp"
     app:cardBackgroundColor="@color/white"
-    app:strokeWidth="0dp"> <LinearLayout
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    android:padding="16dp"
-    android:gravity="center_vertical">
-
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/cvIconBg"
-        android:layout_width="52dp"
-        android:layout_height="52dp"
-        android:layout_marginEnd="16dp"
-        app:cardCornerRadius="26dp"
-        app:cardBackgroundColor="#F1F5F9"
-        app:strokeWidth="0dp"
-        app:cardElevation="0dp">
-
-        <TextView
-            android:id="@+id/tvScoreIcon"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center"
-            android:text="😊"
-            android:textSize="24sp" />
-    </com.google.android.material.card.MaterialCardView>
+    app:strokeWidth="0dp">
 
     <LinearLayout
-        android:layout_width="0dp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:orientation="vertical">
+        android:orientation="horizontal"
+        android:padding="16dp"
+        android:gravity="center_vertical">
+
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            android:layout_marginEnd="16dp"
+            app:cardCornerRadius="16dp"
+            app:cardBackgroundColor="#F8FAFA"
+            app:strokeWidth="1dp"
+            app:strokeColor="#F1F5F9"
+            app:cardElevation="0dp">
+
+            <ImageView
+                android:id="@+id/ivHistoryPhoto"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:src="@android:drawable/ic_menu_gallery" />
+        </com.google.android.material.card.MaterialCardView>
 
         <LinearLayout
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
+            android:layout_weight="1"
+            android:orientation="vertical">
 
             <TextView
                 android:id="@+id/tvNamaProduk"
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
                 android:text="Nama Produk"
                 android:textColor="#1E293B"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                android:maxLines="1"
+                android:maxLines="2"
                 android:ellipsize="end" />
 
-            <ImageView
-                android:id="@+id/btnEditName"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:padding="4dp"
-                android:src="@android:drawable/ic_menu_edit"
-                app:tint="#94A3B8" />
-        </LinearLayout>
-
-        <TextView
-            android:id="@+id/tvWaktu"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:text="2 jam lalu"
-            android:textColor="#94A3B8"
-            android:textSize="12sp" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginTop="12dp">
-
-            <com.google.android.material.card.MaterialCardView
+            <TextView
+                android:id="@+id/tvWaktu"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                app:cardCornerRadius="8dp"
-                app:cardBackgroundColor="#E6F4F1"
-                app:cardElevation="0dp">
-                <TextView
-                    android:id="@+id/tvBadgeStatus"
+                android:layout_marginTop="4dp"
+                android:text="Memuat tanggal..."
+                android:textColor="#64748B"
+                android:textSize="12sp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="12dp">
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cvBadgeStatus"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Cocok"
-                    android:textSize="12sp"
-                    android:textStyle="bold"
-                    android:textColor="#245F58"
-                    android:paddingHorizontal="12dp"
-                    android:paddingVertical="4dp" />
-            </com.google.android.material.card.MaterialCardView>
+                    app:cardCornerRadius="8dp"
+                    app:cardBackgroundColor="#E6F4F1"
+                    app:strokeWidth="0dp"
+                    app:cardElevation="0dp">
+                    <TextView
+                        android:id="@+id/tvBadgeStatus"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Aman"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:textColor="#245F58"
+                        android:paddingHorizontal="10dp"
+                        android:paddingVertical="4dp" />
+                </com.google.android.material.card.MaterialCardView>
 
-            <View
-                android:layout_width="0dp"
-                android:layout_height="1dp"
-                android:layout_weight="1" />
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_weight="1" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Skor:"
-                android:textColor="#64748B"
-                android:textSize="12sp"
-                android:layout_marginEnd="4dp"/>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Skor: "
+                    android:textColor="#64748B"
+                    android:textSize="12sp" />
 
-            <TextView
-                android:id="@+id/tvHealthScore"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="85"
-                android:textColor="#38C6A5"
-                android:textSize="16sp"
-                android:textStyle="bold" />
+                <TextView
+                    android:id="@+id/tvHealthScore"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="0"
+                    android:textColor="#38C6A5"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
         </LinearLayout>
     </LinearLayout>
-</LinearLayout>
 </com.google.android.material.card.MaterialCardView>

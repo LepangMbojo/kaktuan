@@ -91,7 +91,16 @@ class LoginActivity : AppCompatActivity() {
                 }
             }.onFailure { exception ->
                 setLoadingState(false)
-                showPopup("Login Gagal", exception.message ?: "Terjadi kesalahan", false)
+
+                // Logika baru untuk menyederhanakan pesan kesalahan
+                val errorMessage = when {
+                    exception.message?.contains("Invalid login credentials") == true ->
+                        "Email atau Password salah. Silakan periksa kembali."
+                    exception.message?.contains("Email not confirmed") == true ->
+                        "Email belum diverifikasi. Silakan cek inbox Anda."
+                    else -> "Terjadi kesalahan: ${exception.message}"
+                }
+                showPopup("Login Gagal", errorMessage, false)
             }
         }
     }

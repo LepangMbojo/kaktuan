@@ -58,7 +58,7 @@
             android:layout_height="56dp"
             android:layout_marginStart="8dp"
             android:layout_weight="1"
-            android:backgroundTint="#245F58"
+            android:backgroundTint="#1D5A5A"
             android:text="Makan &amp; Simpan"
             android:textAllCaps="false"
             android:textColor="#FFFFFF"
