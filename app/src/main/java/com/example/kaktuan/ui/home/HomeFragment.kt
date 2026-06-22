@@ -1,16 +1,18 @@
 package com.example.kaktuan.ui.home
 
+import android.animation.ValueAnimator
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.os.Bundle
+import android.text.format.DateUtils
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.animation.DecelerateInterpolator
 import android.widget.TextView
-import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.kaktuan.BuildConfig
@@ -23,11 +25,16 @@ import com.example.kaktuan.api.Part
 import com.example.kaktuan.databinding.FragmentHomeBinding
 import com.example.kaktuan.supabase.SupabaseClient
 import com.example.kaktuan.supabase.SupabaseDatabaseHelper
-import com.google.android.material.bottomnavigation.BottomNavigationView
 import io.github.jan.supabase.gotrue.auth
+import io.github.jan.supabase.postgrest.postgrest
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.json.JSONArray
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import java.util.Calendar
 
 class HomeFragment : Fragment() {
 
@@ -35,6 +42,9 @@ class HomeFragment : Fragment() {
     private val binding get() = _binding!!
 
     private lateinit var databaseHelper: SupabaseDatabaseHelper
+
+    // Wadah penyimpan riwayat agar tidak perlu bolak-balik download dari internet saat filter diklik
+    private var dataRiwayatGlobal: JSONArray = JSONArray()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -58,8 +68,7 @@ class HomeFragment : Fragment() {
         val viewsToAnimate = listOf(
             binding.cardSearch,
             binding.cardDashboard,
-            binding.labelMenu,
-            binding.scrollMenu,
+            binding.cardBarChart,
             binding.labelTips,
             binding.cardTipsBanner
         )
@@ -78,28 +87,19 @@ class HomeFragment : Fragment() {
     }
 
     private fun setupClickListeners() {
-        binding.menuRiwayat.setOnClickListener {
-            activity?.findViewById<BottomNavigationView>(R.id.bottomNavigation)?.selectedItemId = R.id.nav_history
+        // Menyambungkan tombol filter dengan logika Pie Chart
+        binding.filterHariIni.setOnClickListener {
+            ubahFilterAktif(binding.filterHariIni)
+            terapkanFilterPieChart("Hari Ini")
         }
-
-        binding.menuStatistik.setOnClickListener {
-            Toast.makeText(requireContext(), "Fitur Statistik Segera Hadir!", Toast.LENGTH_SHORT).show()
+        binding.filterMinggu.setOnClickListener {
+            ubahFilterAktif(binding.filterMinggu)
+            terapkanFilterPieChart("Minggu")
         }
-
-        binding.menuRekomendasi.setOnClickListener {
-            if (binding.rvSaranAI.visibility == View.VISIBLE) {
-                binding.rvSaranAI.visibility = View.GONE
-            } else {
-                binding.rvSaranAI.visibility = View.VISIBLE
-                binding.scrollView.post {
-                    binding.scrollView.smoothScrollTo(0, binding.rvSaranAI.bottom)
-                }
-            }
+        binding.filterSemua.setOnClickListener {
+            ubahFilterAktif(binding.filterSemua)
+            terapkanFilterPieChart("Semua")
         }
-
-        binding.filterHariIni.setOnClickListener { ubahFilterAktif(binding.filterHariIni) }
-        binding.filterMinggu.setOnClickListener { ubahFilterAktif(binding.filterMinggu) }
-        binding.filterSemua.setOnClickListener { ubahFilterAktif(binding.filterSemua) }
     }
 
     private fun ubahFilterAktif(viewAktif: TextView) {
@@ -120,7 +120,8 @@ class HomeFragment : Fragment() {
         val session = SupabaseClient.client.auth.currentSessionOrNull()
         val uid = session?.user?.id ?: return
 
-        muatStatistikKeamanan(uid)
+        // Panggil fungsi penarik riwayat tunggal
+        muatDataRiwayatDashboard(uid)
 
         databaseHelper.getUserProfile(uid) { user ->
             if (_binding == null || user == null) return@getUserProfile
@@ -136,11 +137,9 @@ class HomeFragment : Fragment() {
                     ?: metadata?.get("picture")?.toString()?.replace("\"", "")
             }
 
-            // BLOK YANG SUDAH BERSIH
             if (!fotoUrl.isNullOrEmpty() && fotoUrl != "null") {
                 binding.ivProfileHome.imageTintList = null
-
-                Glide.with(this@HomeFragment) // Menggunakan referensi fragment yang eksplisit
+                Glide.with(this@HomeFragment)
                     .load(fotoUrl)
                     .circleCrop()
                     .placeholder(R.drawable.user)
@@ -166,43 +165,150 @@ class HomeFragment : Fragment() {
         }
     }
 
-    private fun muatStatistikKeamanan(uid: String) {
-        databaseHelper.getScanHistory(uid) { listHistory ->
-            if (_binding == null) return@getScanHistory
+    // Fungsi tunggal untuk mengambil riwayat 1 kali saja
+    private fun muatDataRiwayatDashboard(uid: String) {
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                // PERBAIKAN DI SINI: Gunakan .data untuk mengambil JSON string
+                val response = SupabaseClient.client.postgrest["history"]
+                    .select { filter { eq("user_id", uid) } }
+                    .data
 
-            if (listHistory != null && listHistory.isNotEmpty()) {
-                val totalScan = listHistory.size
-                var countAman = 0
+                // Jika data kosong, Supabase biasanya mengembalikan "[]"
+                if (response.isNotBlank()) {
+                    dataRiwayatGlobal = JSONArray(response)
+                }
 
-                for (history in listHistory) {
-                    if ((history.healthScore ?: 0) >= 70) {
-                        countAman++
+                withContext(Dispatchers.Main) {
+                    if (_binding != null) {
+                        gambarBarChartNative() // Gambar BarChart Mingguan
+                        terapkanFilterPieChart("Semua") // Tampilkan PieChart awal
+                        ubahFilterAktif(binding.filterSemua) // Set tombol awal
                     }
                 }
 
-                updateDiagramLingkaran(countAman, totalScan)
-            } else {
-                updateDiagramLingkaran(0, 0)
+            } catch (e: Exception) {
+                Log.e("HomeFragment", "Gagal muat data riwayat: ${e.message}")
             }
         }
     }
+    // Logika perhitungan skor berdasarkan filter tombol
+    private fun terapkanFilterPieChart(tipeFilter: String) {
+        var totalSkor = 0
+        var jumlahScan = 0
+        val waktuSekarang = System.currentTimeMillis()
 
-    private fun updateDiagramLingkaran(countAman: Int, totalScan: Int) {
-        if (totalScan > 0) {
-            val healthScore = ((countAman.toDouble() / totalScan) * 100).toInt()
+        for (i in 0 until dataRiwayatGlobal.length()) {
+            val item = dataRiwayatGlobal.getJSONObject(i)
+            val score = item.optInt("health_score", 0)
+            val timestamp = item.optLong("timestamp", 0L)
 
-            binding.progressKeamanan.setProgressCompat(healthScore, true)
-            binding.tvPersentase.text = "$healthScore%"
+            if (timestamp > 0) {
+                var masukKriteria = false
 
-            when {
-                healthScore >= 70 -> binding.progressKeamanan.setIndicatorColor(Color.parseColor("#38C6A5"))
-                healthScore >= 40 -> binding.progressKeamanan.setIndicatorColor(Color.parseColor("#F39C12"))
-                else -> binding.progressKeamanan.setIndicatorColor(Color.parseColor("#E74C3C"))
+                when (tipeFilter) {
+                    "Hari Ini" -> {
+                        if (DateUtils.isToday(timestamp)) masukKriteria = true
+                    }
+                    "Minggu" -> {
+                        // Cek apakah data berada dalam 7 hari ke belakang
+                        if (waktuSekarang - timestamp <= 7L * 24 * 60 * 60 * 1000) masukKriteria = true
+                    }
+                    "Semua" -> {
+                        masukKriteria = true
+                    }
+                }
+
+                if (masukKriteria) {
+                    totalSkor += score
+                    jumlahScan++
+                }
             }
-        } else {
-            binding.progressKeamanan.progress = 0
-            binding.tvPersentase.text = "0%"
-            binding.progressKeamanan.setIndicatorColor(Color.parseColor("#334155"))
+        }
+
+        val rataRataSkor = if (jumlahScan > 0) totalSkor / jumlahScan else 0
+        updateDiagramLingkaran(rataRataSkor)
+    }
+
+    private fun updateDiagramLingkaran(rataRataSkor: Int) {
+        if (_binding == null) return
+
+        binding.progressKeamanan.setProgressCompat(rataRataSkor, true)
+        binding.tvPersentase.text = "$rataRataSkor%"
+
+        when {
+            rataRataSkor >= 70 -> binding.progressKeamanan.setIndicatorColor(Color.parseColor("#38C6A5"))
+            rataRataSkor >= 40 -> binding.progressKeamanan.setIndicatorColor(Color.parseColor("#F39C12"))
+            rataRataSkor > 0 -> binding.progressKeamanan.setIndicatorColor(Color.parseColor("#E74C3C"))
+            else -> binding.progressKeamanan.setIndicatorColor(Color.parseColor("#334155")) // Warna abu-abu jika 0
+        }
+    }
+
+    private fun gambarBarChartNative() {
+        if (_binding == null) return
+
+        val skorTotal = FloatArray(7) { 0f }
+        val jumlahScan = IntArray(7) { 0 }
+        val cal = Calendar.getInstance()
+
+        // Bar Chart selalu menampilkan data 1 minggu terakhir, independen dari filter PieChart
+        for (i in 0 until dataRiwayatGlobal.length()) {
+            val item = dataRiwayatGlobal.getJSONObject(i)
+            val time = item.optLong("timestamp", 0L)
+            val score = item.optInt("health_score", 0)
+
+            if (time > 0) {
+                cal.timeInMillis = time
+                var hariIndex = cal.get(Calendar.DAY_OF_WEEK) - 2
+                if (hariIndex < 0) hariIndex = 6
+
+                skorTotal[hariIndex] += score.toFloat()
+                jumlahScan[hariIndex]++
+            }
+        }
+
+        val rataRataSkor = IntArray(7)
+        for (i in 0..6) {
+            rataRataSkor[i] = if (jumlahScan[i] > 0) (skorTotal[i] / jumlahScan[i]).toInt() else 0
+        }
+
+        val daftarBalok = listOf(
+            binding.barSenin, binding.barSelasa, binding.barRabu,
+            binding.barKamis, binding.barJumat, binding.barSabtu, binding.barMinggu
+        )
+        val daftarTeks = listOf(
+            binding.tvSkorSenin, binding.tvSkorSelasa, binding.tvSkorRabu,
+            binding.tvSkorKamis, binding.tvSkorJumat, binding.tvSkorSabtu, binding.tvSkorMinggu
+        )
+
+        val tinggiMaxPx = (140 * resources.displayMetrics.density).toInt()
+
+        for (i in 0..6) {
+            val skor = rataRataSkor[i]
+            daftarTeks[i].text = skor.toString()
+
+            if (skor == 0) continue
+
+            if (skor < 50) {
+                daftarBalok[i].backgroundTintList = ColorStateList.valueOf(Color.parseColor("#E74C3C"))
+                daftarTeks[i].setTextColor(Color.parseColor("#E74C3C"))
+            } else {
+                daftarBalok[i].backgroundTintList = ColorStateList.valueOf(Color.parseColor("#38C6A5"))
+                daftarTeks[i].setTextColor(Color.parseColor("#94A3B8"))
+            }
+
+            val tinggiTujuanPx = (skor / 100f * tinggiMaxPx).toInt()
+
+            ValueAnimator.ofInt(0, tinggiTujuanPx).apply {
+                duration = 1000L
+                interpolator = DecelerateInterpolator()
+                addUpdateListener { animator ->
+                    val param = daftarBalok[i].layoutParams
+                    param.height = animator.animatedValue as Int
+                    daftarBalok[i].layoutParams = param
+                }
+                start()
+            }
         }
     }
 
@@ -215,12 +321,15 @@ class HomeFragment : Fragment() {
                     if (_binding != null) {
                         val result = response.body()?.candidates?.firstOrNull()?.content?.parts?.firstOrNull()?.text
                             ?: "Perbanyak minum air putih dan luangkan waktu 15 menit untuk jalan kaki hari ini!"
+
+                        binding.rvSaranAI.visibility = View.VISIBLE
                         binding.rvSaranAI.adapter = AiAdapter(result)
                     }
                 }
                 override fun onFailure(call: Call<GeminiResponse>, t: Throwable) {
                     if (_binding != null) {
                         Log.e("HomeFragment", "Gagal memuat saran Gemini", t)
+                        binding.rvSaranAI.visibility = View.VISIBLE
                         binding.rvSaranAI.adapter = AiAdapter("Koneksi internet lambat. Tetap perhatikan komposisi makananmu ya!")
                     }
                 }
