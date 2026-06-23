@@ -68,7 +68,7 @@
             </LinearLayout>
 
             <com.google.android.material.card.MaterialCardView
-                android:layout_width="48dp"
+                android:id="@+id/btnNotifikasi" android:layout_width="48dp"
                 android:layout_height="48dp"
                 app:cardCornerRadius="24dp"
                 app:cardElevation="0dp"
@@ -82,7 +82,7 @@
                     android:src="@android:drawable/ic_popup_reminder"
                     app:tint="#245F58"/>
                 <View
-                    android:layout_width="10dp"
+                    android:id="@+id/dotNotif" android:layout_width="10dp"
                     android:layout_height="10dp"
                     android:layout_gravity="top|end"
                     android:layout_marginTop="12dp"

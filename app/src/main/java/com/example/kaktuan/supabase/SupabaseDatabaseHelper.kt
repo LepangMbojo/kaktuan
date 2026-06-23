@@ -90,4 +90,42 @@ class SupabaseDatabaseHelper {
             }
         }
     }
+
+    // =========================
+    // SIMPAN RIWAYAT SCAN & AUTO-NOTIFIKASI
+    // =========================
+    fun saveScanHistory(history: ScanHistory, onComplete: (Boolean) -> Unit) {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                // 1. Simpan hasil scan ke tabel 'history'
+                supabase.postgrest["history"].insert(history)
+
+                // 2. CEK SKOR: Jika di bawah 50, otomatis buat notifikasi!
+                val skor = history.healthScore ?: 0
+                if (skor < 50) {
+
+                    // Menggunakan Map agar tidak perlu membuat InsertNotifModel terpisah
+                    val notifPeringatan = mapOf(
+                        "user_id" to history.userId,
+                        "title" to "⚠️ Peringatan Keamanan!",
+                        "message" to "Hati-hati! '${history.productName}' mendapat skor kesehatan $skor. Kurangi konsumsinya agar kondisi Anda tetap stabil.",
+                        "is_read" to false,
+                        "scan_id" to history.scanId
+                    )
+
+                    // Simpan notifikasi ke tabel 'notifications'
+                    supabase.postgrest["notifications"].insert(notifPeringatan)
+                    Log.d("SupabaseDB", "Notifikasi otomatis berhasil dibuat menggunakan Map!")
+                }
+
+                withContext(Dispatchers.Main) {
+                    Log.d("SupabaseDB", "Riwayat scan berhasil disimpan")
+                    onComplete(true)
+                }
+            } catch (e: Exception) {
+                Log.e("SupabaseDB", "Gagal menyimpan riwayat scan: ", e)
+                withContext(Dispatchers.Main) { onComplete(false) }
+            }
+        }
+    }
 }
