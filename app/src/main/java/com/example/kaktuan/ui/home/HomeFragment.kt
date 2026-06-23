@@ -35,6 +35,8 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import java.util.Calendar
+import android.content.Intent
+import com.example.kaktuan.ui.notifikasi.NotificationActivity
 
 class HomeFragment : Fragment() {
 
@@ -100,8 +102,41 @@ class HomeFragment : Fragment() {
             ubahFilterAktif(binding.filterSemua)
             terapkanFilterPieChart("Semua")
         }
+        binding.btnNotifikasi.setOnClickListener {
+            val intent = Intent(requireContext(), NotificationActivity::class.java)
+            startActivity(intent)
+        }
     }
 
+    private fun cekNotifikasiBaru(uid: String) {
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                // Mencari notifikasi milik user ini yang BELUM DIBACA (is_read = false)
+                val response = SupabaseClient.client.postgrest["notifications"]
+                    .select {
+                        filter {
+                            eq("user_id", uid)
+                            eq("is_read", false)
+                        }
+                    }.data
+
+                // Jika response berisi data (bukan array kosong "[]"), berarti ada pesan baru
+                val adaPesanBaru = response.isNotBlank() && response != "[]"
+
+                withContext(Dispatchers.Main) {
+                    if (_binding != null) {
+                        if (adaPesanBaru) {
+                            binding.dotNotif.visibility = View.VISIBLE
+                        } else {
+                            binding.dotNotif.visibility = View.GONE
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("HomeFragment", "Gagal cek notifikasi: ${e.message}")
+            }
+        }
+    }
     private fun ubahFilterAktif(viewAktif: TextView) {
         val daftarFilter = listOf(binding.filterHariIni, binding.filterMinggu, binding.filterSemua)
 
@@ -122,6 +157,7 @@ class HomeFragment : Fragment() {
 
         // Panggil fungsi penarik riwayat tunggal
         muatDataRiwayatDashboard(uid)
+        cekNotifikasiBaru(uid)
 
         databaseHelper.getUserProfile(uid) { user ->
             if (_binding == null || user == null) return@getUserProfile

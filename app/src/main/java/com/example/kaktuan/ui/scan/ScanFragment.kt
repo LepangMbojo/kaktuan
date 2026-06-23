@@ -362,9 +362,8 @@ class ScanFragment : Fragment() {
             try {
                 // 1. Upload Gambar ke Storage
                 val photoFile = File(requireContext().cacheDir, "scan.jpg")
-                val fileName = "scan_${System.currentTimeMillis()}.jpg"
+                val fileName = "scan_${System.currentTimeMillis()}.jpg" // Nama file gambar tidak masalah pakai millis
 
-                // Upload ke bucket 'scan_images'
                 SupabaseClient.client.storage.from("scan_images").upload(fileName, photoFile.readBytes())
                 val publicUrl = SupabaseClient.client.storage.from("scan_images").publicUrl(fileName)
 
@@ -373,21 +372,49 @@ class ScanFragment : Fragment() {
                 val score = jsonObject.optInt("health_score", 0)
                 val analisisJson = Json.parseToJsonElement(currentGeminiAnalysis).jsonObject
 
+                // PERBAIKAN DI SINI: Buat UUID yang valid sesuai standar Supabase
+                val uniqueScanId = java.util.UUID.randomUUID().toString()
+
                 // 3. Simpan ke tabel History
                 val historyData = buildJsonObject {
+                    put("id", uniqueScanId) // Sekarang ini adalah UUID yang valid!
                     put("user_id", uid)
                     put("product_name", currentProductName)
                     put("ocr_text", currentOcrText)
                     put("recommendation", "Hasil analisis AI")
                     put("health_score", score)
                     put("analisis_kesehatan", analisisJson)
-                    put("photo_url", publicUrl) // URL gambar dari Storage
+                    put("photo_url", publicUrl)
                     put("status", "Dimakan")
                     put("timestamp", System.currentTimeMillis())
                 }
 
                 SupabaseClient.client.postgrest["history"].insert(historyData)
 
+                // 4. OTOMATISASI NOTIFIKASI (UNTUK SEMUA SKOR)
+                val judulNotif: String
+                val pesanNotif: String
+
+                if (score < 50) {
+                    judulNotif = "⚠️ Peringatan Keamanan!"
+                    pesanNotif = "Hati-hati! '$currentProductName' mendapat skor kesehatan $score. Kurangi konsumsinya agar kondisi Anda tetap stabil."
+                } else {
+                    judulNotif = "✅ Pilihan Sehat!"
+                    pesanNotif = "Bagus sekali! '$currentProductName' mendapat skor kesehatan $score. Pertahankan kebiasaan makan sehat Anda!"
+                }
+
+                // SOLUSI: Gunakan buildJsonObject (sama seperti tabel history)
+                val dataNotifikasi = buildJsonObject {
+                    put("user_id", uid)
+                    put("title", judulNotif)
+                    put("message", pesanNotif)
+                    put("is_read", false)
+                    put("scan_id", uniqueScanId)
+                }
+
+                // Eksekusi insert ke tabel notifications
+                SupabaseClient.client.postgrest["notifications"].insert(dataNotifikasi)
+                Log.d("ScanFragment", "Notifikasi otomatis berhasil dikirim!")
                 withContext(Dispatchers.Main) {
                     Toast.makeText(requireContext(), "Tersimpan dengan gambar!", Toast.LENGTH_SHORT).show()
                     dialog.dismiss()
