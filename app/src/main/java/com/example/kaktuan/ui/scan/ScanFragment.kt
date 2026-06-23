@@ -289,6 +289,12 @@ class ScanFragment : Fragment() {
                         } catch (e: Exception) {
                             showResultBottomSheet("Gagal membedah hasil AI.", false)
                         }
+                    }else {
+                        // INI CARA MEMBONGKAR RAHASIA ERRORNYA:
+                        val alasanError = response.errorBody()?.string()
+
+                        Log.e("DEBUG_API", "Akses ditolak dengan kode: ${response.code()}")
+                        Log.e("DEBUG_API", "Surat penolakan dari server: $alasanError")
                     }
                 }
                 override fun onFailure(call: Call<GeminiResponse>, t: Throwable) {

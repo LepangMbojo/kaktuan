@@ -35,7 +35,12 @@ class NotificationActivity : AppCompatActivity() {
         }
 
         binding.rvNotifications.layoutManager = LinearLayoutManager(this)
-
+        supportFragmentManager.addOnBackStackChangedListener {
+            if (supportFragmentManager.backStackEntryCount == 0) {
+                // Jika fragment ditutup, sembunyikan kembali FrameLayout-nya
+                binding.fragmentContainer.visibility = View.GONE
+            }
+        }
         tarikDataNotifikasiAsli()
     }
 

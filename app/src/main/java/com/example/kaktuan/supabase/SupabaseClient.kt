@@ -11,9 +11,9 @@ import kotlinx.serialization.json.Json
 object SupabaseClient {
     // 1. Definisikan konfigurasi JSON yang "tahan banting"
     private val jsonConfig = Json {
-        ignoreUnknownKeys = true   // Mengabaikan kolom baru di DB yang belum ada di model
-        isLenient = true           // Lebih toleran terhadap format JSON yang tidak standar
-        coerceInputValues = true   // PENTING: Mengubah null dari DB menjadi nilai default (misal 0)
+        ignoreUnknownKeys = true
+        isLenient = true
+        coerceInputValues = true
     }
 
     val client = createSupabaseClient(

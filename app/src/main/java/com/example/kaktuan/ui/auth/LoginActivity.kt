@@ -128,7 +128,9 @@ class LoginActivity : AppCompatActivity() {
             if (isExists) {
                 startActivity(Intent(this@LoginActivity, HomeActivity::class.java))
             } else {
-                startActivity(Intent(this@LoginActivity, BiodataActivity::class.java))
+                val intent = Intent(this@LoginActivity, BiodataActivity::class.java)
+                intent.putExtra("IS_NEW_USER", true) // <-- Titipan pesan
+                startActivity(intent)
             }
             finish()
         }
