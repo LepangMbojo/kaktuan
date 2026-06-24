@@ -20,6 +20,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.UUID
+import androidx.activity.OnBackPressedCallback
+import android.view.View
 
 class BiodataActivity : AppCompatActivity() {
 
@@ -54,7 +56,21 @@ class BiodataActivity : AppCompatActivity() {
     }
 
     private fun setupClickListeners() {
-        binding.btnBack.setOnClickListener { finish() }
+        val isNewUser = intent.getBooleanExtra("IS_NEW_USER", false)
+
+        if (isNewUser) {
+            binding.btnBack.visibility = View.INVISIBLE
+
+            onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    Toast.makeText(this@BiodataActivity, "Silakan lengkapi biodata Anda untuk melanjutkan.", Toast.LENGTH_SHORT).show()
+                }
+            })
+        } else {
+            binding.btnBack.visibility = View.VISIBLE
+            binding.btnBack.setOnClickListener { finish() }
+        }
+
         binding.btnChangePhoto.setOnClickListener { galleryLauncher.launch("image/*") }
         binding.btnSimpan.setOnClickListener { simpanBiodata() }
     }

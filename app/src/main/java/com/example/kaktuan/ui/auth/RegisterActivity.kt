@@ -88,7 +88,7 @@ class RegisterActivity : AppCompatActivity() {
 
         builder.setPositiveButton("Mengerti") { dialog, _ ->
             dialog.dismiss()
-            onOkClicked?.invoke() // Navigasi ke halaman login jika sukses
+            onOkClicked?.invoke()
         }
         builder.show()
     }

@@ -278,11 +278,23 @@ class ScanFragment : Fragment() {
                             currentProductName = json.optString("product_name", "Produk Tidak Dikenali")
 
                             val analysis = json.getJSONObject("analysis")
-                            val status = if (analysis.optBoolean("is_safe", true)) "✅ LAYAK" else "❌ TIDAK LAYAK"
-                            showResultBottomSheet("$status\n\n${analysis.getString("conclusion")}", true)
+
+                            // PERBAIKAN: Ambil nilai is_safe dari JSON
+                            val isSafe = analysis.optBoolean("is_safe", true)
+                            val conclusion = analysis.getString("conclusion")
+
+                            // PERBAIKAN: Kirim isSafe sebagai parameter ketiga
+                            showResultBottomSheet(conclusion, true, isSafe)
+
                         } catch (e: Exception) {
                             showResultBottomSheet("Gagal membedah hasil AI.", false)
                         }
+                    }else {
+                        // INI CARA MEMBONGKAR RAHASIA ERRORNYA:
+                        val alasanError = response.errorBody()?.string()
+
+                        Log.e("DEBUG_API", "Akses ditolak dengan kode: ${response.code()}")
+                        Log.e("DEBUG_API", "Surat penolakan dari server: $alasanError")
                     }
                 }
                 override fun onFailure(call: Call<GeminiResponse>, t: Throwable) {
@@ -292,11 +304,13 @@ class ScanFragment : Fragment() {
             })
     }
 
-    private fun showResultBottomSheet(resultText: String, isSuccess: Boolean) {
+    private fun showResultBottomSheet(resultText: String, isSuccess: Boolean, isSafe: Boolean = false) {
         val bottomSheetDialog = BottomSheetDialog(requireContext())
         val bottomSheetView = layoutInflater.inflate(R.layout.bottom_sheet_result, null)
         bottomSheetDialog.setContentView(bottomSheetView)
 
+        val ivSheetIcon = bottomSheetView.findViewById<ImageView>(R.id.ivSheetIcon)
+        val tvSheetStatus = bottomSheetView.findViewById<TextView>(R.id.tvSheetStatus)
         val tvSheetResult = bottomSheetView.findViewById<TextView>(R.id.tvSheetResult)
         val btnSheetBatal = bottomSheetView.findViewById<Button>(R.id.btnSheetBatal)
         val btnSheetSimpan = bottomSheetView.findViewById<Button>(R.id.btnSheetSimpan)
@@ -305,8 +319,27 @@ class ScanFragment : Fragment() {
 
         if (isSuccess) {
             btnSheetSimpan.visibility = View.VISIBLE
+
+            // Logika Warna dan Teks berdasarkan Status Aman/Bahaya
+            if (isSafe) {
+                ivSheetIcon.setImageResource(android.R.drawable.ic_dialog_info)
+                ivSheetIcon.backgroundTintList = android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#E6F4F1"))
+                ivSheetIcon.setColorFilter(android.graphics.Color.parseColor("#38C6A5"))
+
+                tvSheetStatus.text = "LAYAK KONSUMSI"
+                tvSheetStatus.setTextColor(android.graphics.Color.parseColor("#38C6A5"))
+            } else {
+                ivSheetIcon.setImageResource(android.R.drawable.ic_dialog_alert)
+                ivSheetIcon.backgroundTintList = android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#FEE2E2"))
+                ivSheetIcon.setColorFilter(android.graphics.Color.parseColor("#EF4444"))
+
+                tvSheetStatus.text = "BAHAYA KONSUMSI"
+                tvSheetStatus.setTextColor(android.graphics.Color.parseColor("#EF4444"))
+            }
         } else {
             btnSheetSimpan.visibility = View.GONE
+            tvSheetStatus.text = "ANALISIS GAGAL"
+            tvSheetStatus.setTextColor(android.graphics.Color.parseColor("#64748B"))
         }
 
         btnSheetBatal.setOnClickListener {
@@ -316,6 +349,7 @@ class ScanFragment : Fragment() {
 
         btnSheetSimpan.setOnClickListener {
             btnSheetSimpan.isEnabled = false
+            btnSheetSimpan.text = "Menyimpan..."
             simpanKeRiwayat(bottomSheetDialog)
         }
 

@@ -261,6 +261,7 @@
                 android:layout_marginBottom="40dp"
                 android:backgroundTint="#1D5A5A"
                 android:text="Simpan Profil"
+                android:textColor="#FFFFFF"
                 android:textAllCaps="false"
                 android:textSize="16sp"
                 android:textStyle="bold"

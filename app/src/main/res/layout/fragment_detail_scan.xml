@@ -45,6 +45,7 @@
         android:layout_marginHorizontal="24dp"
         android:layout_marginBottom="24dp"
         android:text="Simpan Perubahan Nama"
+        android:textColor="#FFFFFF"
         android:textAllCaps="false"
         android:textSize="16sp"
         android:textStyle="bold"
@@ -266,11 +267,11 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:layout_marginBottom="16dp"
                         android:text="Informasi Nilai Gizi"
-                        android:textStyle="bold"
-                        android:textSize="15sp"
                         android:textColor="#1E293B"
-                        android:layout_marginBottom="16dp"/>
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
 
                     <GridLayout
                         android:layout_width="match_parent"
@@ -278,23 +279,95 @@
                         android:columnCount="2"
                         android:useDefaultMargins="true">
 
-                        <TextView android:text="Total Energi:" android:textColor="#64748B" android:textSize="13sp" android:layout_width="0dp" android:layout_columnWeight="1"/>
-                        <TextView android:id="@+id/tvGiziEnergi" android:text="-" android:textStyle="bold" android:textColor="#1E293B" android:textSize="13sp" android:layout_width="wrap_content"/>
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_columnWeight="1"
+                            android:text="Total Energi:"
+                            android:textColor="#64748B"
+                            android:textSize="13sp" />
 
-                        <TextView android:text="Gula:" android:textColor="#64748B" android:textSize="13sp" android:layout_width="0dp" android:layout_columnWeight="1"/>
-                        <TextView android:id="@+id/tvGiziGula" android:text="-" android:textStyle="bold" android:textColor="#1E293B" android:textSize="13sp" android:layout_width="wrap_content"/>
+                        <TextView
+                            android:id="@+id/tvGiziEnergi"
+                            android:layout_width="wrap_content"
+                            android:text="-"
+                            android:textColor="#1E293B"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
 
-                        <TextView android:text="Lemak:" android:textColor="#64748B" android:textSize="13sp" android:layout_width="0dp" android:layout_columnWeight="1"/>
-                        <TextView android:id="@+id/tvGiziLemak" android:text="-" android:textStyle="bold" android:textColor="#1E293B" android:textSize="13sp" android:layout_width="wrap_content"/>
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_columnWeight="1"
+                            android:text="Gula:"
+                            android:textColor="#64748B"
+                            android:textSize="13sp" />
 
-                        <TextView android:text="Karbohidrat:" android:textColor="#64748B" android:textSize="13sp" android:layout_width="0dp" android:layout_columnWeight="1"/>
-                        <TextView android:id="@+id/tvGiziKarbo" android:text="-" android:textStyle="bold" android:textColor="#1E293B" android:textSize="13sp" android:layout_width="wrap_content"/>
+                        <TextView
+                            android:id="@+id/tvGiziGula"
+                            android:layout_width="wrap_content"
+                            android:text="-"
+                            android:textColor="#1E293B"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
 
-                        <TextView android:text="Protein:" android:textColor="#64748B" android:textSize="13sp" android:layout_width="0dp" android:layout_columnWeight="1"/>
-                        <TextView android:id="@+id/tvGiziProtein" android:text="-" android:textStyle="bold" android:textColor="#1E293B" android:textSize="13sp" android:layout_width="wrap_content"/>
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_columnWeight="1"
+                            android:text="Lemak:"
+                            android:textColor="#64748B"
+                            android:textSize="13sp" />
 
-                        <TextView android:text="Garam/Sodium:" android:textColor="#64748B" android:textSize="13sp" android:layout_width="0dp" android:layout_columnWeight="1"/>
-                        <TextView android:id="@+id/tvGiziGaram" android:text="-" android:textStyle="bold" android:textColor="#1E293B" android:textSize="13sp" android:layout_width="wrap_content"/>
+                        <TextView
+                            android:id="@+id/tvGiziLemak"
+                            android:layout_width="wrap_content"
+                            android:text="-"
+                            android:textColor="#1E293B"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_columnWeight="1"
+                            android:text="Karbohidrat:"
+                            android:textColor="#64748B"
+                            android:textSize="13sp" />
+
+                        <TextView
+                            android:id="@+id/tvGiziKarbo"
+                            android:layout_width="wrap_content"
+                            android:text="-"
+                            android:textColor="#1E293B"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_columnWeight="1"
+                            android:text="Protein:"
+                            android:textColor="#64748B"
+                            android:textSize="13sp" />
+
+                        <TextView
+                            android:id="@+id/tvGiziProtein"
+                            android:layout_width="wrap_content"
+                            android:text="-"
+                            android:textColor="#1E293B"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_columnWeight="1"
+                            android:text="Garam/Sodium:"
+                            android:textColor="#64748B"
+                            android:textSize="13sp" />
+
+                        <TextView
+                            android:id="@+id/tvGiziGaram"
+                            android:layout_width="wrap_content"
+                            android:text="-"
+                            android:textColor="#1E293B"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
 
                     </GridLayout>
                 </LinearLayout>
